@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi CAT SKD CPNS Bagian 33</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; margin: 0; height: 100dvh; display: flex; flex-direction: column; }
+        .header-bkn { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); color: white; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .progress-bar-container { flex-grow: 1; margin: 0 40px; display: flex; flex-direction: column; align-items: flex-end; }
+        .progress-bar-bg { width: 100%; height: 8px; background-color: rgba(255,255,255,0.25); border-radius: 9999px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background-color: #facc15; width: 0%; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
+        .timer-bkn-container { background-color: #fef2f2; border: 1px solid #fee2e2; border-radius: 8px; padding: 4px 10px; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        @keyframes flipHourglass { 0%,25%{transform:rotate(0deg);} 40%,75%{transform:rotate(180deg);} 90%,100%{transform:rotate(360deg);} }
+        .animate-hourglass { animation: flipHourglass 4s infinite ease-in-out; transform-origin:center; color:#2563eb; }
+        .timer-bkn-text { color:#dc2626; font-weight:800; font-size:1.1rem; line-height:1; letter-spacing:0.5px; }
+        .btn-selesai-header { background-color:#ef4444; color:white; padding:6px 14px; border-radius:9999px; font-weight:700; font-size:0.85rem; transition:all .2s; box-shadow:0 4px 6px -1px rgba(239,68,68,0.4); }
+        .btn-selesai-header:hover { background-color:#b91c1c; transform:translateY(-1px); }
+        #exam-container { display:flex; flex-direction:column; flex-grow:1; overflow:hidden; }
+        .main-content-wrapper { display:flex; flex-grow:1; overflow:hidden; }
+        .sidebar-nav { width:300px; flex-shrink:0; background-color:#f1f5f9; display:flex; flex-direction:column; padding:20px 16px; height:100%; border-right:1px solid #e2e8f0; order:1; }
+        .nav-grid-wrapper { background-color:white; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.05); padding:16px 12px; overflow-y:auto; flex-grow:1; border:1px solid #e2e8f0; }
+        .nav-grid-bkn { display:grid; grid-template-columns:repeat(auto-fill,minmax(42px,1fr)); gap:8px; }
+        .nav-btn-bkn { height:42px; width:100%; border-radius:8px; border:1px solid #ef4444; font-weight:700; font-size:14px; cursor:pointer; color:white; display:flex; align-items:center; justify-content:center; background-color:#ef4444; transition:all .15s; }
+        .nav-btn-bkn:hover { background-color:#dc2626; }
+        .nav-btn-bkn.answered { background-color:#10b981; border-color:#10b981; }
+        .nav-btn-bkn.answered:hover { background-color:#059669; }
+        .nav-btn-bkn.current { background-color:#facc15; color:#1e293b; border-color:#facc15; box-shadow:0 0 0 3px rgba(250,204,21,0.35); }
+        .question-area { flex-grow:1; padding:32px 48px; overflow-y:auto; background-color:white; display:flex; flex-direction:column; order:2; }
+        .question-box { background-color:#f8fafc; border:1px solid #e2e8f0; border-left:5px solid #3b82f6; padding:24px; border-radius:12px; margin-bottom:24px; font-size:1.1rem; line-height:1.75; color:#1e293b; }
+        .options-list { display:flex; flex-direction:column; gap:14px; }
+        .option-item { display:flex; align-items:flex-start; padding:16px 20px; border:1.5px solid #e2e8f0; border-radius:12px; cursor:pointer; transition:all .2s cubic-bezier(0.4,0,0.2,1); }
+        .option-item:hover { background-color:#f8fafc; border-color:#cbd5e1; transform:translateX(4px); }
+        .option-item input[type="radio"] { display:none; }
+        .option-letter { width:32px; height:32px; border-radius:50%; background-color:#e2e8f0; color:#475569; display:flex; align-items:center; justify-content:center; font-weight:700; margin-right:18px; flex-shrink:0; transition:all .2s; margin-top:2px; }
+        .option-text { font-size:1.02rem; color:#334155; line-height:1.5; flex-grow:1; }
+        .option-item.selected { border-color:#3b82f6; background-color:#eff6ff; box-shadow:0 4px 6px -1px rgba(59,130,246,0.1); }
+        .option-item.selected .option-letter { background-color:#3b82f6; color:white; }
+        .action-buttons { display:flex; flex-direction:row; gap:16px; margin-top:24px; }
+        .btn-simpan, .btn-lewatkan { flex:1; justify-content:center; white-space:nowrap; }
+        .result-progress-container { width:100%; background-color:#e2e8f0; border-radius:9999px; height:10px; margin-top:12px; position:relative; overflow:hidden; }
+        .result-passing-line { position:absolute; top:0; bottom:0; width:2px; background-color:#ef4444; z-index:10; }
+        .fig-badge { background:#0ea5e9; color:white; font-size:10px; font-weight:800; padding:2px 8px; border-radius:9999px; display:inline-block; margin-bottom:8px; letter-spacing:.05em; }
+        @media (max-width:1024px){ .sidebar-nav{width:250px;} .question-area{padding:24px;} .progress-bar-container{margin:0 20px;} }
+        @media (max-width:768px){
+            .main-content-wrapper{flex-direction:column;}
+            .sidebar-nav{width:100%;height:auto;max-height:135px;border-right:none;border-top:1px solid #e2e8f0;padding:6px 12px;order:2;}
+            .nav-grid-wrapper{padding:6px 8px;}
+            .question-area{padding:16px;order:1;}
+            .nav-grid-bkn{grid-template-columns:repeat(auto-fill,minmax(28px,1fr));gap:4px;}
+            .nav-btn-bkn{height:28px;font-size:11px;border-radius:4px;border-width:1px;}
+            .header-bkn{flex-wrap:wrap;padding:12px 16px;gap:12px;}
+            .header-title-area{width:100%;}
+            .progress-bar-container{margin:0;width:100%;align-items:flex-start;order:3;margin-top:4px;}
+            .header-actions{width:100%;justify-content:space-between;order:2;}
+            .action-buttons{flex-direction:row;gap:8px;padding-top:24px;}
+            .btn-simpan,.btn-lewatkan{width:50%;justify-content:center;padding:10px 8px;font-size:.9rem;}
+            .legend-container{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:4px;padding-top:4px;border-top:1px solid #e2e8f0;}
+            .legend-item{margin-bottom:0!important;}
+            .legend-item span{font-size:10px;}
+            .legend-item div{width:12px;height:12px;}
+        }
+        @media (max-width:480px){
+            .timer-bkn-container{padding:3px 8px;gap:6px;}
+            .timer-bkn-text{font-size:.95rem;}
+            .btn-selesai-header{font-size:.75rem;padding:5px 10px;}
+            .question-box{padding:16px;font-size:1rem;}
+            .option-item{padding:10px 12px;}
+            .option-letter{width:26px;height:26px;font-size:.9rem;margin-right:12px;}
+            .option-text{font-size:.9rem;}
+            .sidebar-nav{max-height:115px;padding:4px 8px;}
+            .nav-grid-bkn{grid-template-columns:repeat(auto-fill,minmax(24px,1fr));gap:3px;}
+            .nav-btn-bkn{height:24px;font-size:10px;border-radius:4px;border-width:1px;}
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc]">
+
+    <!-- HALAMAN INFO -->
+    <div id="info-page" class="min-h-screen flex flex-col bg-gray-100">
+        <header class="bg-[#1e3a8a] text-white py-3 px-6 flex flex-col md:flex-row justify-between items-center shadow-md">
+            <div class="flex items-center gap-3 mb-2 md:mb-0">
+                <svg viewBox="0 0 100 100" class="w-10 h-10">
+                    <circle cx="50" cy="50" r="46" fill="#facc15" />
+                    <path d="M50 20 L30 35 L50 50 L70 35 Z" fill="#1e3a8a"/>
+                    <path d="M30 45 L50 60 L70 45 L70 50 L50 65 L30 50 Z" fill="#1e3a8a"/>
+                </svg>
+                <div>
+                    <div class="flex items-baseline leading-none mb-1"><span class="text-white font-black text-lg tracking-tight">tescpns</span><span class="text-orange-400 font-black text-lg tracking-tight">.online</span></div>
+                    <h1 class="text-md font-bold tracking-wider uppercase">Simulasi CAT SKD CPNS Bagian 33</h1>
+                    <p class="text-xs text-blue-200">Format SKD 110 Soal tescpns.online</p>
+                </div>
+            </div>
+        </header>
+        <div class="bg-red-700 text-white text-center text-sm md:text-base font-bold px-4 py-3 leading-snug shrink-0">
+            ⚠️ Dilarang memfoto, merekam, menyalin, dan/atau menyebarluaskan soal maupun pembahasan ujian ini dalam bentuk apa pun kepada pihak lain. Pelanggaran atas ketentuan ini dapat dikenakan sanksi sesuai Undang-Undang Nomor 28 Tahun 2014 tentang Hak Cipta dan Undang-Undang Informasi dan Transaksi Elektronik (ITE) yang berlaku.
+            <div class="text-[11px] md:text-xs font-semibold text-red-100 mt-1">© tescpns.online — Hak Cipta Dilindungi Undang-Undang. Seluruh soal dan pembahasan adalah milik tescpns.online.</div>
+        </div>
+
+
+        <main class="flex-grow p-4 md:p-8 max-w-6xl mx-auto w-full">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 flex flex-col bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+                    <div class="bg-blue-600 text-white font-bold py-4 px-5 flex items-center gap-2">📋 Detail Simulasi SKD CPNS</div>
+                    <div class="p-6 flex-grow flex flex-col justify-between">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b pb-2 mb-4">Informasi Ujian</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between text-sm"><span class="text-gray-500">⏳ Durasi</span><span class="font-bold text-gray-800">100 menit</span></div>
+                                    <div class="flex items-center justify-between text-sm"><span class="text-gray-500">📋 Total Soal</span><span class="font-bold text-gray-800">110 soal</span></div>
+                                    <div class="flex items-center justify-between text-sm"><span class="text-gray-500">🏆 Passing Grade</span><span class="font-bold text-gray-800">311</span></div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b pb-2 mb-4">Komposisi Soal</h3>
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between text-xs md:text-sm"><span class="text-gray-700 font-medium">TWK (Ambang 65)</span><span class="bg-violet-100 text-violet-700 font-bold px-2.5 py-1 rounded">30 Soal</span></div>
+                                    <div class="flex items-center justify-between text-xs md:text-sm"><span class="text-gray-700 font-medium">TIU (Ambang 80)</span><span class="bg-sky-100 text-sky-700 font-bold px-2.5 py-1 rounded">35 Soal</span></div>
+                                    <div class="flex items-center justify-between text-xs md:text-sm"><span class="text-gray-700 font-medium">TKP (Ambang 166)</span><span class="bg-amber-100 text-amber-700 font-bold px-2.5 py-1 rounded">45 Soal</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4">
+                    <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                        <div class="bg-yellow-500 text-white font-bold py-3.5 px-5 flex items-center gap-2">⚠️ Perhatian Penting</div>
+                        <div class="p-5 text-sm space-y-3.5 text-gray-700">
+                            <div class="flex gap-2 items-start"><span class="text-green-600 font-bold">✓</span><p>Siapkan kertas coretan untuk soal TIU.</p></div>
+                            <div class="flex gap-2 items-start"><span class="text-sky-600 font-bold">📶</span><p>Pastikan Anda memiliki koneksi internet yang stabil dan lancar selama ujian berlangsung, karena koneksi yang terputus dapat menyebabkan jawaban gagal tersimpan.</p></div>
+                            <div class="flex gap-2 items-start"><span class="text-yellow-600 font-bold">⏳</span><p>Waktu 100 menit berjalan tanpa jeda. Jika habis, ujian otomatis terkirim.</p></div>
+                            <div class="flex gap-2 items-start border-t pt-4 mt-4"><span class="text-blue-600 font-bold">ℹ️</span><p class="font-bold text-gray-800 text-sm">Petunjuk Navigasi Warna:</p></div>
+                            <div class="space-y-2 pl-6 mt-2">
+                                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-[#10b981]"></div><span class="text-xs">Hijau: Sudah Dijawab</span></div>
+                                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-[#facc15]"></div><span class="text-xs">Kuning: Posisi Soal Aktif</span></div>
+                                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-[#ef4444]"></div><span class="text-xs">Merah: Belum Dijawab</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-5 flex flex-col gap-3">
+                        <table class="w-full text-sm mb-1">
+                            <tbody>
+                                <tr>
+                                    <td class="py-2 pr-3 font-semibold text-gray-700 whitespace-nowrap align-middle">Nama Peserta</td>
+                                    <td class="py-2 w-full">
+                                        <input type="text" id="input-nama-peserta" placeholder="Contoh: Ali Saefudin" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <p class="text-[11px] text-gray-400 mt-1">Silakan masukkan nama lengkap Anda sebelum memulai ujian.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button id="btn-mulai-ujian-sekarang" class="w-full bg-[#10b981] hover:bg-[#059669] text-white font-bold py-4 px-4 rounded-xl shadow-md transition duration-250 flex items-center justify-center gap-2 text-lg">▶ MULAI UJIAN</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- HALAMAN UJIAN -->
+    <div id="exam-container" class="hidden">
+        <header class="header-bkn">
+            <div class="header-title-area">
+                <h1 class="font-bold tracking-wide">Simulasi CAT SKD CPNS</h1>
+                <p class="text-blue-200 text-sm">Peserta: <span class="user-name-placeholder font-semibold text-white">Peserta</span></p>
+            </div>
+            <div class="progress-bar-container hidden md:flex">
+                <div class="progress-text text-sm font-bold mb-1"><span id="dijawab-count-header" class="text-yellow-300">0</span> / <span id="total-soal-header">110</span> Dijawab</div>
+                <div class="progress-bar-bg"><div id="progress-fill" class="progress-bar-fill"></div></div>
+            </div>
+            <div class="header-actions flex gap-4 items-center">
+                <div class="timer-bkn-container">
+                    <div class="timer-icon-wrapper">
+                        <svg class="animate-hourglass" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 22h14"></path><path d="M5 2h14"></path><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"></path><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"></path>
+                        </svg>
+                    </div>
+                    <div class="timer-text-group flex flex-col">
+                        <span class="text-[9px] font-bold text-red-500 leading-none">SISA WAKTU</span>
+                        <span id="timer-bkn-text" class="timer-bkn-text">100:00</span>
+                    </div>
+                </div>
+                <button id="finish-btn-header" class="btn-selesai-header">Selesai Ujian</button>
+            </div>
+        </header>
+
+        <div class="main-content-wrapper">
+            <aside class="sidebar-nav">
+                <div class="nav-grid-wrapper flex flex-col">
+                    <div id="nav-grid-bkn" class="nav-grid-bkn flex-grow overflow-y-auto"></div>
+                    <div class="legend-container mt-4 pt-3 border-t border-slate-200 shrink-0">
+                        <div class="flex items-center gap-2.5 mb-2 legend-item"><div class="w-5 h-5 rounded-full bg-[#10b981]"></div><span class="text-sm font-medium text-slate-700">Sudah Dijawab</span></div>
+                        <div class="flex items-center gap-2.5 mb-2 legend-item"><div class="w-5 h-5 rounded-full bg-[#facc15]"></div><span class="text-sm font-medium text-slate-700">Soal Aktif</span></div>
+                        <div class="flex items-center gap-2.5 legend-item"><div class="w-5 h-5 rounded-full bg-[#ef4444]"></div><span class="text-sm font-medium text-slate-700">Belum Dijawab</span></div>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="question-area">
+                <div class="mb-4">
+                    <h2 id="soal-number-title" class="text-xl md:text-2xl font-extrabold text-gray-800 mb-2">Soal 1 dari 110</h2>
+                    <span id="soal-category-badge" class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold inline-block">Memuat Kategori...</span>
+                </div>
+                <div class="question-box"><div id="question-text" class="m-0">Memuat soal...</div></div>
+                <div id="options-container" class="options-list"></div>
+                <div class="action-buttons">
+                    <button id="btn-simpan" class="btn-simpan bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 transition shadow-md">Simpan dan Lanjutkan</button>
+                    <button id="btn-lewatkan" class="btn-lewatkan bg-white text-red-600 border border-red-200 hover:bg-red-50 font-bold py-3 px-6 rounded-xl transition">Lewati Soal Ini</button>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- HALAMAN HASIL -->
+    <div id="result-page" class="hidden min-h-screen bg-slate-50 flex flex-col">
+        <header class="bg-[#0f172a] text-white py-4 px-6 flex justify-between items-center shadow-lg shrink-0">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl md:text-3xl">📊</span>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-black tracking-wide text-white">Rapor & Analisis Prediksi Kelulusan</h1>
+                    <p class="text-xs text-slate-400">Peserta: <span class="user-name-placeholder text-white font-semibold">Peserta</span></p>
+                </div>
+            </div>
+            <div class="flex gap-2"><button onclick="window.location.reload();" class="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold px-5 py-2.5 rounded-lg transition shadow-md">Ulangi Simulasi</button></div>
+        </header>
+
+        <main class="flex-grow p-4 md:p-8 max-w-6xl mx-auto w-full space-y-8 overflow-y-auto">
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="flex flex-col items-center justify-center border-b md:border-b-0 md:border-r border-slate-100 pb-6 md:pb-0 md:pr-6 relative">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Skor Kumulatif</p>
+                    <span id="app-total-score" class="text-6xl font-black text-[#1e3a8a] my-2">0</span>
+                    <span class="text-xs text-slate-400 mb-2">Target Aman: 311 - 550</span>
+                    <span id="app-overall-badge" class="px-4 py-1.5 rounded-full text-xs font-extrabold tracking-wide uppercase text-center w-full">TIDAK MEMENUHI</span>
+                </div>
+                <div class="flex flex-col p-4 bg-violet-50 rounded-xl border border-violet-100 justify-center">
+                    <div class="flex justify-between items-end mb-1">
+                        <div><span class="text-[10px] font-bold text-violet-500 uppercase">Wawasan Kebangsaan</span><div class="text-3xl font-black text-violet-900" id="app-score-twk">0</div></div>
+                        <span id="app-status-twk" class="font-extrabold mb-1">GAGAL</span>
+                    </div>
+                    <div class="result-progress-container bg-violet-200"><div id="bar-twk" class="progress-bar-fill bg-violet-600" style="width:0%"></div><div class="result-passing-line" style="left:43.33%"></div></div>
+                    <div class="flex justify-between text-[10px] text-violet-500 mt-1 font-semibold"><span>Min: 65</span><span>Maks: 150</span></div>
+                </div>
+                <div class="flex flex-col p-4 bg-sky-50 rounded-xl border border-sky-100 justify-center">
+                    <div class="flex justify-between items-end mb-1">
+                        <div><span class="text-[10px] font-bold text-sky-500 uppercase">Intelegensia Umum</span><div class="text-3xl font-black text-sky-900" id="app-score-tiu">0</div></div>
+                        <span id="app-status-tiu" class="font-extrabold mb-1">GAGAL</span>
+                    </div>
+                    <div class="result-progress-container bg-sky-200"><div id="bar-tiu" class="progress-bar-fill bg-sky-600" style="width:0%"></div><div class="result-passing-line" style="left:45.71%"></div></div>
+                    <div class="flex justify-between text-[10px] text-sky-500 mt-1 font-semibold"><span>Min: 80</span><span>Maks: 175</span></div>
+                </div>
+                <div class="flex flex-col p-4 bg-amber-50 rounded-xl border border-amber-100 justify-center">
+                    <div class="flex justify-between items-end mb-1">
+                        <div><span class="text-[10px] font-bold text-amber-600 uppercase">Karakteristik Pribadi</span><div class="text-3xl font-black text-amber-900" id="app-score-tkp">0</div></div>
+                        <span id="app-status-tkp" class="font-extrabold mb-1">GAGAL</span>
+                    </div>
+                    <div class="result-progress-container bg-amber-200"><div id="bar-tkp" class="progress-bar-fill bg-amber-500" style="width:0%"></div><div class="result-passing-line" style="left:73.78%"></div></div>
+                    <div class="flex justify-between text-[10px] text-amber-600 mt-1 font-semibold"><span>Min: 166</span><span>Maks: 225</span></div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                    <div><h3 class="text-lg font-bold text-slate-800">Bedah Soal & Kunci Jawaban</h3><p class="text-xs text-slate-500">Gunakan filter untuk meninjau kelemahan Anda</p></div>
+                    <div class="flex flex-wrap gap-2" id="explanation-filters">
+                        <button data-filter="all" class="filter-btn active px-4 py-1.5 rounded-lg text-xs font-bold transition bg-[#1e3a8a] text-white">Semua</button>
+                        <button data-filter="correct" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-bold transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">Benar</button>
+                        <button data-filter="incorrect" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-bold transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">Salah</button>
+                        <button data-filter="twk" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-bold transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">TWK</button>
+                        <button data-filter="tiu" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-bold transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">TIU</button>
+                        <button data-filter="tkp" class="filter-btn px-4 py-1.5 rounded-lg text-xs font-bold transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">TKP</button>
+                    </div>
+                </div>
+                <div id="explanation-feed-list" class="space-y-6"></div>
+            </div>
+        </main>
+    </div>
+
+    <div id="custom-alert" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 hidden z-[100] backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-left border border-slate-100 transform transition-all">
+            <div class="flex justify-between items-center border-b pb-3 mb-4"><h3 class="text-lg font-black text-slate-800">INFORMASI SISTEM</h3><button id="close-alert-btn" class="text-slate-400 hover:text-red-500 text-2xl font-bold leading-none">&times;</button></div>
+            <p id="unanswered-count" class="text-red-600 font-bold mb-2"></p>
+            <p id="custom-alert-message" class="text-slate-600 mb-6 text-sm leading-relaxed"></p>
+            <div id="custom-alert-buttons" class="flex justify-end gap-3"></div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // ===================== SVG HELPER (untuk soal TIU Figural) =====================
+    function poly(sides, fill, rotate, size) {
+        rotate = rotate === undefined ? -90 : rotate;
+        size = size || 33;
+        const cx = 50, cy = 50; let pts = [];
+        for (let i = 0; i < sides; i++) {
+            const angle = rotate + i * (360 / sides);
+            const rad = angle * Math.PI / 180;
+            pts.push((cx + size * Math.cos(rad)).toFixed(1) + "," + (cy + size * Math.sin(rad)).toFixed(1));
+        }
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><polygon points="' + pts.join(' ') + '" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/></svg>';
+    }
+    function arrowSvg(deg, fill) {
+        fill = fill || '#1e3a8a';
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><g transform="rotate(' + deg + ' 50 50)"><polygon points="50,12 78,55 62,55 62,88 38,88 38,55 22,55" fill="' + fill + '"/></g></svg>';
+    }
+    function dotsSvg(count) {
+        const positions = [[20,20],[50,20],[80,20],[20,50],[50,50],[80,50],[20,80],[50,80],[80,80]];
+        let out = '';
+        for (let i = 0; i < count && i < 9; i++) { out += '<circle cx="' + positions[i][0] + '" cy="' + positions[i][1] + '" r="8" fill="#1e3a8a"/>'; }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + out + '</svg>';
+    }
+    function pieSvg(fraction, fill) {
+        fill = fill || '#3b82f6';
+        if (fraction <= 0) return '<svg viewBox="0 0 100 100" width="62" height="62"><circle cx="50" cy="50" r="40" fill="white" stroke="#1e293b" stroke-width="2.5"/></svg>';
+        if (fraction >= 1) return '<svg viewBox="0 0 100 100" width="62" height="62"><circle cx="50" cy="50" r="40" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/></svg>';
+        const cx = 50, cy = 50, r = 40;
+        const angle = fraction * 360;
+        const rad = (angle - 90) * Math.PI / 180;
+        const x = (cx + r * Math.cos(rad)).toFixed(1);
+        const y = (cy + r * Math.sin(rad)).toFixed(1);
+        const largeArc = angle > 180 ? 1 : 0;
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><circle cx="50" cy="50" r="40" fill="white" stroke="#1e293b" stroke-width="2.5"/><path d="M50,50 L50,10 A40,40 0 ' + largeArc + ' 1 ' + x + ',' + y + ' Z" fill="' + fill + '"/></svg>';
+    }
+    function squareSize(size, fill) {
+        fill = fill || 'none';
+        const half = size / 2;
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><rect x="' + (50-half) + '" y="' + (50-half) + '" width="' + size + '" height="' + size + '" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/></svg>';
+    }
+    function circleSize(r, fill) {
+        fill = fill || 'none';
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><circle cx="50" cy="50" r="' + r + '" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/></svg>';
+    }
+    function overlapCircles(n) {
+        const positions = [[35,50],[65,50],[50,30],[50,70],[50,50]];
+        let out = '';
+        for (let i = 0; i < n && i < 5; i++) { out += '<circle cx="' + positions[i][0] + '" cy="' + positions[i][1] + '" r="22" fill="none" stroke="#1e3a8a" stroke-width="2.5" opacity="0.85"/>'; }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + out + '</svg>';
+    }
+    function flagShape(mirror, fill) {
+        fill = fill || '#1e3a8a';
+        const triPoints = mirror ? "65,20 30,35 65,50" : "35,20 70,35 35,50";
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><rect x="32" y="15" width="6" height="70" fill="' + fill + '"/><polygon points="' + triPoints + '" fill="' + fill + '"/></svg>';
+    }
+    function flagRotated(deg, fill) {
+        fill = fill || '#1e3a8a';
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><g transform="rotate(' + deg + ' 50 50)"><rect x="32" y="15" width="6" height="70" fill="' + fill + '"/><polygon points="35,20 70,35 35,50" fill="' + fill + '"/></g></svg>';
+    }
+    function triCircle() {
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><polygon points="50,15 85,80 15,80" fill="none" stroke="#1e293b" stroke-width="3"/><circle cx="50" cy="60" r="18" fill="none" stroke="#dc2626" stroke-width="3"/></svg>';
+    }
+    function sqCircle() {
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><rect x="15" y="15" width="70" height="70" fill="none" stroke="#1e293b" stroke-width="3"/><circle cx="50" cy="50" r="33" fill="none" stroke="#dc2626" stroke-width="3"/></svg>';
+    }
+    function circleOnly() { return '<svg viewBox="0 0 100 100" width="62" height="62"><circle cx="50" cy="50" r="30" fill="none" stroke="#dc2626" stroke-width="3"/></svg>'; }
+    function triOnly() { return '<svg viewBox="0 0 100 100" width="62" height="62"><polygon points="50,18 82,78 18,78" fill="none" stroke="#1e293b" stroke-width="3"/></svg>'; }
+    function squareOnly() { return '<svg viewBox="0 0 100 100" width="62" height="62"><rect x="18" y="18" width="64" height="64" fill="none" stroke="#1e293b" stroke-width="3"/></svg>'; }
+    function row(items) { return '<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:10px 0;">' + items.join('') + '</div>'; }
+    function qMark() { return '<span style="font-size:30px;font-weight:800;color:#dc2626;display:inline-flex;align-items:center;padding:0 4px;">?</span>'; }
+    function figIntro(txt) { return '<div class="fig-badge">🖼️ SOAL FIGURAL BERGAMBAR</div><div style="margin-bottom:6px;">' + txt + '</div>'; }
+    function figIntroExtreme(txt) { return '<div class="fig-badge" style="background:#dc2626;">🖼️⚡ SOAL FIGURAL SUPER HOTS (KESULITAN LUAR BIASA TINGGI)</div><div style="margin-bottom:6px;">' + txt + '</div>'; }
+    function matrixGrid(cells) { return '<div style="display:grid;grid-template-columns:repeat(3,68px);gap:10px;margin:10px 0;">' + cells.map(function(c){ return '<div style="display:flex;align-items:center;justify-content:center;border:1px solid #e2e8f0;border-radius:8px;padding:6px;background:#f8fafc;">'+c+'</div>'; }).join('') + '</div>'; }
+    function rotateWrap(svgStr, deg) { return '<div style="display:inline-block;transform:rotate(' + deg + 'deg);">' + svgStr + '</div>'; }
+    function scaleWrap(svgStr, factor) { return '<div style="display:inline-block;transform:scale(' + factor + ');">' + svgStr + '</div>'; }
+
+    // Helper SVG BARU khusus batch soal figural kali ini (pola 100% berbeda dari batch sebelumnya)
+    function starPoly(points, fill) {
+        fill = fill || '#7c3aed';
+        const cx = 50, cy = 50, outerR = 38, innerR = 16;
+        let pts = [];
+        for (let i = 0; i < points * 2; i++) {
+            const r = i % 2 === 0 ? outerR : innerR;
+            const angle = -90 + i * (360 / (points * 2));
+            const rad = angle * Math.PI / 180;
+            pts.push((cx + r * Math.cos(rad)).toFixed(1) + "," + (cy + r * Math.sin(rad)).toFixed(1));
+        }
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><polygon points="' + pts.join(' ') + '" fill="' + fill + '" stroke="#1e293b" stroke-width="2"/></svg>';
+    }
+    function nestedSquares(n, strokeColor) {
+        strokeColor = strokeColor || '#1e293b';
+        let rects = '';
+        const maxSize = 74, step = 14;
+        for (let i = 0; i < n && i < 5; i++) {
+            const size = maxSize - i * step;
+            const pos = 50 - size / 2;
+            rects += '<rect x="' + pos.toFixed(1) + '" y="' + pos.toFixed(1) + '" width="' + size + '" height="' + size + '" fill="none" stroke="' + strokeColor + '" stroke-width="2.5"/>';
+        }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + rects + '</svg>';
+    }
+    function gridShade(n, fill) {
+        fill = fill || '#0ea5e9';
+        const cells = [[10,10],[52,10],[10,52],[52,52]];
+        let out = '<rect x="8" y="8" width="84" height="84" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="50" y1="8" x2="50" y2="92" stroke="#1e293b" stroke-width="2"/><line x1="8" y1="50" x2="92" y2="50" stroke="#1e293b" stroke-width="2"/>';
+        for (let i = 0; i < n && i < 4; i++) { out += '<rect x="' + cells[i][0] + '" y="' + cells[i][1] + '" width="38" height="38" fill="' + fill + '"/>'; }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + out + '</svg>';
+    }
+    function linesSvg(n, color) {
+        color = color || '#1e3a8a';
+        let out = '';
+        const ys = [25,40,55,70,85];
+        for (let i = 0; i < n && i < 5; i++) { out += '<line x1="12" y1="' + ys[i] + '" x2="88" y2="' + ys[i] + '" stroke="' + color + '" stroke-width="5" stroke-linecap="round"/>'; }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + out + '</svg>';
+    }
+    function diagShape(mirror, fill) {
+        fill = fill || '#1e3a8a';
+        const pathNormal = 'M20,20 L20,50 L35,50 L35,35 L60,35 L60,20 Z';
+        const pathMirror = 'M20,20 L50,20 L50,35 L35,35 L35,60 L20,60 Z';
+        return '<svg viewBox="0 0 100 100" width="62" height="62"><path d="' + (mirror ? pathMirror : pathNormal) + '" fill="' + fill + '" stroke="#1e293b" stroke-width="1.5"/><line x1="10" y1="90" x2="90" y2="10" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3,3"/></svg>';
+    }
+    function squareFull(fill) { fill = fill || 'none'; return '<svg viewBox="0 0 100 100" width="62" height="62"><polygon points="20,20 80,20 80,80 20,80" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/></svg>'; }
+    function squareCut(fill) { fill = fill || 'none'; return '<svg viewBox="0 0 100 100" width="62" height="62"><polygon points="20,20 65,20 80,35 80,80 20,80" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/></svg>'; }
+    function pentFull(fill) { fill = fill || 'none'; return poly(5, fill, -90, 35); }
+    function pentCut(fill) { fill = fill || 'none'; return '<svg viewBox="0 0 100 100" width="62" height="62"><polygon points="50,15 78,35 68,44 66,80 34,80 22,35" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/></svg>'; }
+    function polyWithDots(dotCount, fill) {
+        fill = fill || 'none';
+        const outer = '<polygon points="50,15 85,75 15,75" fill="' + fill + '" stroke="#1e293b" stroke-width="2.5"/>';
+        const positions = [[50,55],[40,62],[60,62],[50,68],[35,68]];
+        let dots = '';
+        for (let i = 0; i < dotCount && i < 5; i++) { dots += '<circle cx="' + positions[i][0] + '" cy="' + positions[i][1] + '" r="4.5" fill="#dc2626"/>'; }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + outer + dots + '</svg>';
+    }
+    function chevronSvg(n, color) {
+        color = color || '#1e3a8a';
+        const ys = [20,40,60,80];
+        let out = '';
+        for (let i = 0; i < n && i < 4; i++) { const y = ys[i]; out += '<polyline points="25,' + y + ' 50,' + (y+12) + ' 75,' + y + '" fill="none" stroke="' + color + '" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>'; }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + out + '</svg>';
+    }
+    function nestedTriAlt(n) {
+        const sizes = [40,28,18,10];
+        let out = '';
+        for (let i = 0; i < n && i < 4; i++) {
+            const s = sizes[i];
+            const fillColor = i % 2 === 0 ? '#1e293b' : 'white';
+            const topY = 50 - s, leftX = 50 - s, rightX = 50 + s, botY = 50 + s * 0.6;
+            out += '<polygon points="50,' + topY + ' ' + rightX + ',' + botY + ' ' + leftX + ',' + botY + '" fill="' + fillColor + '" stroke="#1e293b" stroke-width="2"/>';
+        }
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + out + '</svg>';
+    }
+    function labeledRow(items, labels) {
+        let out = '<div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin:10px 0;">';
+        for (let i = 0; i < items.length; i++) {
+            out += '<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">' + items[i] + '<span style="font-weight:800;font-size:13px;color:#1e293b;">' + labels[i] + '</span></div>';
+        }
+        out += '</div>';
+        return out;
+    }
+    function gridDiag(variant) {
+        const base = '<rect x="8" y="8" width="84" height="84" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="50" y1="8" x2="50" y2="92" stroke="#1e293b" stroke-width="2"/><line x1="8" y1="50" x2="92" y2="50" stroke="#1e293b" stroke-width="2"/>';
+        const tl = '<rect x="10" y="10" width="38" height="38" fill="#0ea5e9"/>';
+        const tr = '<rect x="52" y="10" width="38" height="38" fill="#0ea5e9"/>';
+        const bl = '<rect x="10" y="52" width="38" height="38" fill="#0ea5e9"/>';
+        const br = '<rect x="52" y="52" width="38" height="38" fill="#0ea5e9"/>';
+        const cells = variant === 1 ? (tl + br) : (tr + bl);
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + base + cells + '</svg>';
+    }
+    function gridAdjacent() {
+        const base = '<rect x="8" y="8" width="84" height="84" fill="none" stroke="#1e293b" stroke-width="2"/><line x1="50" y1="8" x2="50" y2="92" stroke="#1e293b" stroke-width="2"/><line x1="8" y1="50" x2="92" y2="50" stroke="#1e293b" stroke-width="2"/>';
+        const tl = '<rect x="10" y="10" width="38" height="38" fill="#0ea5e9"/>';
+        const tr = '<rect x="52" y="10" width="38" height="38" fill="#0ea5e9"/>';
+        return '<svg viewBox="0 0 100 100" width="62" height="62">' + base + tl + tr + '</svg>';
+    }
+
+
+    // ===================== BANK SOAL MASTER HOTS++ (110 SOAL: 30 TWK / 35 TIU / 45 TKP) — BAGIAN KE-33 =====================
+    const MC = (cat, q, opts, idx, pemb) => ({ category: cat, question: q, options: opts, answer: opts[idx], pembahasan: pemb });
+    const TKP = (q, opts, pemb) => ({
+        category: "TKP", question: q,
+        options: opts.map(o => ({ text: o[0], score: o[1] })),
+        answer: opts.find(o => o[1] === 5)[0], pembahasan: pemb
+    });
+    const masterHotsData = [
+    // ============================================================
+    // BAGIAN TWK (HOTS Sangat Tinggi) — 30 SOAL — BAGIAN KE-33 (Isu 10 tahun terakhir: 2016–2026)
+    // ============================================================
+    MC("TWK","Pemerintah menetapkan pandemi Covid-19 sebagai bencana nasional nonalam pada 13 April 2020, setelah sebelumnya menetapkan status kedaruratan kesehatan masyarakat pada 31 Maret 2020. Instrumen hukum yang secara spesifik digunakan untuk menetapkan status bencana nasional nonalam tersebut adalah...",
+      ["Keputusan Presiden Nomor 11 Tahun 2020","Keputusan Presiden Nomor 12 Tahun 2020","Peraturan Pemerintah Nomor 21 Tahun 2020","Peraturan Pemerintah Pengganti Undang-Undang Nomor 1 Tahun 2020","Peraturan Presiden Nomor 82 Tahun 2020"],1,
+      "Keppres Nomor 11 Tahun 2020 menetapkan Kedaruratan Kesehatan Masyarakat Covid-19, sedangkan Keppres Nomor 12 Tahun 2020 menetapkan penyebaran Covid-19 sebagai bencana nonalam berstatus bencana nasional. PP Nomor 21 Tahun 2020 mengatur PSBB, Perppu Nomor 1 Tahun 2020 mengatur kebijakan keuangan negara, dan Perpres Nomor 82 Tahun 2020 membentuk Komite Penanganan Covid-19 dan Pemulihan Ekonomi Nasional."),
+    MC("TWK","Dalam UU Nomor 6 Tahun 2018 tentang Kekarantinaan Kesehatan, terdapat beberapa bentuk tindakan, di antaranya Karantina Wilayah dan Pembatasan Sosial Berskala Besar (PSBB) yang diterapkan pada 2020. Pernyataan yang paling tepat mengenai perbedaan keduanya adalah...",
+      ["Karantina Wilayah hanya dapat ditetapkan oleh pemerintah daerah, sedangkan PSBB hanya dapat ditetapkan oleh pemerintah pusat","Selama Karantina Wilayah, kebutuhan hidup dasar orang dan makanan hewan ternak di wilayah karantina menjadi tanggung jawab Pemerintah Pusat, sedangkan ketentuan serupa tidak melekat pada PSBB","PSBB melarang seluruh penduduk meninggalkan rumah, sedangkan Karantina Wilayah hanya membatasi kegiatan tertentu","Karantina Wilayah hanya diberlakukan bagi orang yang telah terkonfirmasi sakit, sedangkan PSBB bagi orang sehat","Keduanya identik dan hanya berbeda pada istilah yang dipakai oleh pemerintah"],1,
+      "Pasal 55 UU Nomor 6 Tahun 2018 menegaskan bahwa selama Karantina Wilayah, kebutuhan hidup dasar orang dan makanan hewan ternak menjadi tanggung jawab Pemerintah Pusat dengan melibatkan pemerintah daerah. Kewajiban penuh tersebut tidak melekat pada PSBB, yang berupa pembatasan kegiatan tertentu (sekolah, tempat kerja, kegiatan keagamaan, fasilitas umum, dan sebagainya). Pemilihan PSBB dibanding Karantina Wilayah sering dikaitkan dengan besarnya beban pemenuhan kebutuhan dasar tersebut."),
+    MC("TWK","Melalui Putusan Nomor 91/PUU-XVIII/2020, Mahkamah Konstitusi menyatakan UU Cipta Kerja cacat formil dan inkonstitusional bersyarat dengan tenggat perbaikan dua tahun. Pemerintah kemudian menerbitkan Perppu Nomor 2 Tahun 2022 yang kemudian ditetapkan menjadi UU Nomor 6 Tahun 2023. Menurut Pasal 22 UUD 1945, kedudukan Perppu adalah...",
+      ["Ditetapkan Presiden dalam hal ihwal kegentingan yang memaksa, harus mendapat persetujuan DPR dalam persidangan yang berikut, dan jika tidak disetujui harus dicabut","Berlaku permanen tanpa memerlukan persetujuan lembaga mana pun karena merupakan hak prerogatif Presiden","Harus mendapat persetujuan MPR dalam sidang tahunan agar tetap berlaku","Baru berlaku setelah dinyatakan sah melalui pengujian oleh Mahkamah Konstitusi","Hanya boleh diterbitkan ketika negara dalam keadaan darurat militer"],0,
+      "Pasal 22 UUD 1945 menyatakan Presiden berhak menetapkan Perppu dalam hal ihwal kegentingan yang memaksa. Perppu harus mendapat persetujuan DPR dalam persidangan yang berikut; jika tidak mendapat persetujuan, Perppu itu harus dicabut. Pada kasus Cipta Kerja, DPR menyetujui Perppu tersebut sehingga ditetapkan menjadi UU Nomor 6 Tahun 2023."),
+    MC("TWK","Revisi UU KPK melalui UU Nomor 19 Tahun 2019 menimbulkan perdebatan luas. Menurut undang-undang tersebut, kedudukan KPK dan status pegawainya adalah...",
+      ["Lembaga negara dalam rumpun kekuasaan yudikatif, dengan pegawai berstatus tetap di luar ASN","Lembaga negara dalam rumpun kekuasaan eksekutif yang tetap independen dalam menjalankan tugas, dengan pegawai berstatus ASN","Lembaga negara dalam rumpun kekuasaan legislatif yang bertanggung jawab kepada DPR, dengan pegawai berstatus ASN","Lembaga negara di luar ketiga cabang kekuasaan, dengan pegawai sepenuhnya di luar UU ASN","Lembaga negara dalam rumpun kekuasaan eksekutif yang tidak lagi bersifat independen, dengan pegawai berstatus tenaga kontrak"],1,
+      "UU Nomor 19 Tahun 2019 menempatkan KPK sebagai lembaga negara dalam rumpun kekuasaan eksekutif yang dalam melaksanakan tugas dan wewenangnya tetap independen dan bebas dari pengaruh kekuasaan mana pun, membentuk Dewan Pengawas, serta menetapkan pegawai KPK sebagai bagian dari ASN. Pengalihan pegawai menjadi ASN inilah yang kemudian memunculkan polemik asesmen Tes Wawasan Kebangsaan tahun 2021."),
+    MC("TWK","UU Nomor 3 Tahun 2022 menetapkan Ibu Kota Nusantara (IKN) sebagai satuan pemerintahan daerah yang bersifat khusus setingkat provinsi yang dipimpin Kepala Otorita. Landasan konstitusional yang secara langsung mengakui adanya satuan pemerintahan daerah yang bersifat khusus tersebut adalah...",
+      ["Pasal 18 ayat (1) UUD 1945","Pasal 18A ayat (1) UUD 1945","Pasal 18B ayat (1) UUD 1945","Pasal 18B ayat (2) UUD 1945","Pasal 25A UUD 1945"],2,
+      "Pasal 18B ayat (1) UUD 1945 menyatakan negara mengakui dan menghormati satuan-satuan pemerintahan daerah yang bersifat khusus atau bersifat istimewa yang diatur dengan undang-undang. Pasal 18B ayat (2) berkaitan dengan kesatuan masyarakat hukum adat, Pasal 18A ayat (1) dengan hubungan wewenang pusat dan daerah, sedangkan Pasal 25A dengan wilayah negara kepulauan."),
+    MC("TWK","Pada 2 Januari 2025, Mahkamah Konstitusi melalui Putusan Nomor 62/PUU-XXII/2024 menyatakan Pasal 222 UU Pemilu yang mengatur ambang batas pencalonan presiden bertentangan dengan UUD 1945. Konsekuensi utama putusan tersebut adalah...",
+      ["Ambang batas pencalonan dinaikkan menjadi 25% kursi DPR agar koalisi partai lebih stabil","Syarat perolehan 20% kursi DPR atau 25% suara sah nasional tidak lagi berlaku sebagai syarat pengusulan pasangan calon oleh partai politik peserta pemilu","Pasangan calon presiden boleh diusulkan oleh perseorangan tanpa melalui partai politik","Pemilihan presiden dilaksanakan dalam satu putaran tanpa mensyaratkan sebaran suara","Presiden dan Wakil Presiden dipilih oleh MPR sebagaimana sebelum amandemen"],1,
+      "Putusan MK tersebut menghapus norma ambang batas pencalonan presiden dan wakil presiden (20% kursi DPR atau 25% suara sah nasional) karena dianggap bertentangan dengan UUD 1945. Dengan demikian, setiap partai politik peserta pemilu dapat mengusulkan pasangan calon, sementara Pasal 6A UUD 1945 tetap mengatur pencalonan oleh partai atau gabungan partai politik, bukan perseorangan."),
+    MC("TWK","Dalam sistem penegakan hukum pemilu di Indonesia, pasangan lembaga dan kewenangan yang KELIRU adalah...",
+      ["DKPP - memeriksa dan memutus dugaan pelanggaran kode etik penyelenggara pemilu","Bawaslu - menyelesaikan sengketa proses pemilu","Mahkamah Konstitusi - memutus perselisihan hasil pemilu","PTUN - menyelesaikan sengketa tata usaha negara pemilu setelah upaya administratif di Bawaslu","KPU - memutus perselisihan hasil pemilu secara final dan mengikat"],4,
+      "Perselisihan hasil pemilu diputus oleh Mahkamah Konstitusi (Pasal 24C ayat 1 UUD 1945) yang putusannya final dan mengikat, bukan oleh KPU. KPU adalah penyelenggara yang menetapkan hasil pemilu, sedangkan DKPP menangani etik penyelenggara, Bawaslu menangani sengketa proses, dan PTUN menangani sengketa tata usaha negara pemilu."),
+    MC("TWK","Pemekaran wilayah di Tanah Papua pada 2022 meningkatkan jumlah provinsi di Indonesia menjadi 38. Pasangan provinsi hasil pemekaran dan ibu kotanya yang tepat adalah...",
+      ["Papua Selatan - Merauke","Papua Tengah - Wamena","Papua Pegunungan - Nabire","Papua Barat Daya - Manokwari","Papua Selatan - Timika"],0,
+      "Papua Selatan beribu kota di Merauke, Papua Tengah di Nabire, Papua Pegunungan di Jayawijaya (Wamena), dan Papua Barat Daya di Sorong. Dengan tambahan empat provinsi tersebut, jumlah provinsi bertambah dari 34 menjadi 38 sebagai bagian dari kebijakan Otonomi Khusus Papua jilid II (UU Nomor 2 Tahun 2021)."),
+    MC("TWK","Maraknya kebocoran data pribadi masyarakat, termasuk data pengguna aplikasi layanan publik, mendorong pengesahan UU Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi. Ketentuan UUD 1945 yang paling langsung menjadi landasan konstitusional pelindungan tersebut adalah...",
+      ["Pasal 28D ayat (1) tentang pengakuan, jaminan, perlindungan, dan kepastian hukum yang adil","Pasal 28F tentang hak berkomunikasi dan memperoleh informasi","Pasal 28G ayat (1) tentang hak atas perlindungan diri pribadi, keluarga, kehormatan, martabat, dan harta benda","Pasal 28H ayat (4) tentang hak milik pribadi","Pasal 28I ayat (4) tentang tanggung jawab negara memajukan HAM"],2,
+      "Pasal 28G ayat (1) UUD 1945 menjamin hak setiap orang atas perlindungan diri pribadi, keluarga, kehormatan, martabat, dan harta benda, serta rasa aman dari ancaman ketakutan, sehingga menjadi pijakan utama pelindungan data pribadi. Pasal 28F justru menjamin hak memperoleh dan menyampaikan informasi, yang perlu diseimbangkan dengan pelindungan data pribadi."),
+    MC("TWK","Selama PSBB, pemerintah membatasi ibadah berjamaah di rumah ibadah untuk mencegah penularan Covid-19. Dalam perspektif HAM menurut UUD 1945, pernyataan yang paling tepat adalah...",
+      ["Pembatasan tersebut inkonstitusional karena hak beragama tidak boleh dibatasi dalam bentuk apa pun","Kebebasan beragama sebagai keyakinan batin tidak dapat dikurangi dalam keadaan apa pun (Pasal 28I ayat 1), sedangkan pelaksanaan ibadah secara kolektif dapat dibatasi dengan undang-undang untuk menjamin hak orang lain serta ketertiban umum (Pasal 28J ayat 2)","Pembatasan tersebut sah karena keadaan darurat meniadakan seluruh hak asasi warga negara","Pembatasan tersebut sah karena Pasal 29 ayat (2) UUD 1945 memberi wewenang Presiden untuk mengatur tata cara ibadah","Pemerintah tidak berwenang membatasi karena negara berdasarkan Ketuhanan Yang Maha Esa"],1,
+      "Hak beragama termasuk hak yang tidak dapat dikurangi dalam keadaan apa pun (Pasal 28I ayat 1), namun ini terutama menyangkut kebebasan batin berkeyakinan (forum internum). Pelaksanaan ibadah secara kolektif (forum externum) dapat dibatasi dengan undang-undang semata-mata untuk menjamin pengakuan dan penghormatan hak orang lain serta memenuhi tuntutan keadilan berdasarkan pertimbangan moral, nilai agama, keamanan, dan ketertiban umum (Pasal 28J ayat 2)."),
+    MC("TWK","UU Nomor 1 Tahun 2023 tentang KUHP (KUHP Nasional) menggantikan KUHP warisan kolonial. Pernyataan yang tepat mengenai waktu berlakunya dan pengaturan pidana mati di dalamnya adalah...",
+      ["Berlaku sejak diundangkan pada 2 Januari 2023 dan pidana mati menjadi pidana pokok","Berlaku pada 2 Januari 2026, pidana mati merupakan pidana yang bersifat khusus dan selalu diancamkan secara alternatif dengan masa percobaan 10 tahun","Berlaku pada 2 Januari 2025 dan pidana mati dihapuskan seluruhnya","Berlaku pada 2 Januari 2026 dan pidana mati dihapuskan seluruhnya","Berlaku pada 2 Januari 2026, pidana mati tetap pidana pokok tanpa masa percobaan"],1,
+      "KUHP Nasional diundangkan 2 Januari 2023 dan berlaku tiga tahun kemudian, yaitu 2 Januari 2026. Pidana mati dalam KUHP baru diposisikan sebagai pidana yang bersifat khusus dan selalu diancamkan secara alternatif, dengan masa percobaan 10 tahun yang dapat mengubahnya menjadi pidana seumur hidup jika terpidana berkelakuan terpuji."),
+    MC("TWK","Perilaku ASN berikut: memegang teguh ideologi Pancasila dan UUD 1945, setia kepada NKRI serta pemerintahan yang sah, menjaga nama baik sesama ASN, pimpinan, instansi, dan negara, serta menjaga rahasia jabatan dan rahasia negara, merupakan panduan perilaku dari nilai dasar ASN BerAKHLAK yang bernama...",
+      ["Kompeten","Harmonis","Loyal","Adaptif","Kolaboratif"],2,
+      "Nilai Loyal dalam BerAKHLAK mencakup memegang teguh ideologi Pancasila, UUD 1945, kesetiaan pada NKRI dan pemerintahan yang sah, menjaga nama baik, serta menjaga rahasia jabatan dan negara. Kompeten berkaitan dengan peningkatan kapabilitas, Harmonis dengan sikap saling peduli dan menghargai perbedaan, Adaptif dengan inovasi menghadapi perubahan, dan Kolaboratif dengan kerja sama sinergis."),
+    MC("TWK","Seorang ASN di media sosial pribadinya mengunggah ajakan untuk memilih pasangan calon kepala daerah tertentu dan menandai akun resmi tim kampanye. Perbuatan tersebut paling jelas melanggar asas penyelenggaraan kebijakan dan manajemen ASN yang disebut...",
+      ["Kepastian hukum","Akuntabilitas","Netralitas","Efektif dan efisien","Keterpaduan"],2,
+      "UU ASN mengatur asas netralitas, yaitu setiap pegawai ASN tidak berpihak dari segala bentuk pengaruh mana pun dan tidak memihak kepada kepentingan siapa pun. Mengunggah ajakan memilih paslon tertentu merupakan bentuk keberpihakan dalam politik praktis yang bertentangan dengan asas netralitas, termasuk pada penyelenggaraan Pemilu dan Pilkada."),
+    MC("TWK","Anggota MPR periode 2024-2029 berjumlah 732 orang (580 anggota DPR dan 152 anggota DPD). Berdasarkan Pasal 37 UUD 1945, jumlah minimal anggota MPR yang harus menyetujui agar suatu perubahan pasal UUD 1945 dapat diputuskan adalah...",
+      ["244 orang","366 orang","367 orang","488 orang","489 orang"],2,
+      "Pasal 37 UUD 1945 mensyaratkan usul perubahan diajukan sekurang-kurangnya 1/3 anggota MPR (244), sidang dihadiri sekurang-kurangnya 2/3 anggota (488), dan putusan diambil dengan persetujuan sekurang-kurangnya lima puluh persen ditambah satu anggota dari seluruh anggota MPR. Setengah dari 732 adalah 366, ditambah satu menjadi 367 orang."),
+    MC("TWK","Jika Presiden dan Wakil Presiden mangkat, berhenti, diberhentikan, atau tidak dapat melakukan kewajiban dalam masa jabatannya secara bersamaan, maka menurut Pasal 8 ayat (3) UUD 1945 pelaksana tugas kepresidenan dan batas waktu penyelenggaraan sidang MPR untuk memilih pengganti adalah...",
+      ["Ketua MPR, Ketua DPR, dan Ketua DPD; paling lama 14 hari","Menteri Luar Negeri, Menteri Dalam Negeri, dan Menteri Pertahanan secara bersama-sama; paling lama 30 hari","Menteri Koordinator Politik, Hukum, dan Keamanan; paling lama 30 hari","Menteri Luar Negeri, Menteri Dalam Negeri, dan Menteri Pertahanan secara bersama-sama; paling lama 60 hari","Panglima TNI dan Kapolri secara bersama-sama; paling lama 30 hari"],1,
+      "Pasal 8 ayat (3) UUD 1945 menyebut Menteri Luar Negeri, Menteri Dalam Negeri, dan Menteri Pertahanan sebagai pelaksana tugas kepresidenan secara bersama-sama. Paling lambat tiga puluh hari setelah itu, MPR menyelenggarakan sidang untuk memilih Presiden dan Wakil Presiden dari dua pasangan calon yang diusulkan partai atau gabungan partai yang pasangan calonnya meraih suara terbanyak pertama dan kedua pada pemilu sebelumnya."),
+    MC("TWK","Perppu Nomor 2 Tahun 2017 (kemudian menjadi UU Nomor 16 Tahun 2017) menyederhanakan mekanisme pembubaran ormas yang bertentangan dengan Pancasila melalui penerapan asas contrarius actus. Makna asas tersebut adalah...",
+      ["Setiap orang dianggap tidak bersalah sampai ada putusan pengadilan yang berkekuatan hukum tetap","Pejabat atau lembaga yang berwenang menerbitkan suatu keputusan (pengesahan) juga berwenang membatalkan atau mencabutnya","Aturan yang lebih baru mengesampingkan aturan yang lebih lama pada bidang yang sama","Aturan yang bersifat khusus mengesampingkan aturan yang bersifat umum","Hukum tidak boleh berlaku surut terhadap perbuatan yang dilakukan sebelum aturan tersebut ada"],1,
+      "Asas contrarius actus berarti pejabat yang berwenang menerbitkan keputusan tata usaha negara, termasuk pengesahan badan hukum ormas, juga berwenang mencabutnya. Dengan asas ini, pemerintah dapat mencabut status badan hukum ormas tanpa proses pengadilan terlebih dahulu, yang menjadi salah satu titik kritik terhadap perppu tersebut."),
+    MC("TWK","Peraturan Menteri Kesehatan Nomor 9 Tahun 2020 tentang Pedoman PSBB tidak tercantum dalam hierarki peraturan perundang-undangan menurut Pasal 7 UU Nomor 12 Tahun 2011. Kedudukan peraturan menteri tersebut adalah...",
+      ["Tidak sah karena tidak termasuk dalam hierarki peraturan perundang-undangan","Diakui keberadaannya dan mempunyai kekuatan hukum mengikat sepanjang diperintahkan oleh peraturan perundang-undangan yang lebih tinggi atau dibentuk berdasarkan kewenangan","Setara kedudukannya dengan undang-undang karena dibuat atas nama Presiden","Setara dengan Peraturan Presiden dan dapat membatalkan Peraturan Pemerintah","Hanya berlaku sebagai surat edaran internal kementerian tanpa daya ikat kepada masyarakat"],1,
+      "Pasal 8 UU Nomor 12 Tahun 2011 mengakui peraturan yang ditetapkan menteri dan lembaga lain, dan peraturan tersebut mempunyai kekuatan hukum mengikat sepanjang diperintahkan oleh peraturan perundang-undangan yang lebih tinggi atau dibentuk berdasarkan kewenangan. Hierarki Pasal 7 berurutan: UUD 1945, TAP MPR, UU/Perppu, PP, Perpres, Perda Provinsi, Perda Kabupaten/Kota."),
+    MC("TWK","Seorang ASN menerima bingkisan bernilai besar dari rekanan proyek dan menyadari bahwa pemberian itu berkaitan dengan jabatannya. Menurut Pasal 12C UU Tipikor (UU Nomor 20 Tahun 2001), penerima gratifikasi tidak dipidana apabila melaporkannya kepada KPK dalam jangka waktu paling lambat...",
+      ["7 hari kerja","14 hari kerja","30 hari kerja","30 hari kalender","60 hari kerja"],2,
+      "Penerima gratifikasi wajib melaporkannya kepada KPK paling lambat 30 hari kerja terhitung sejak tanggal gratifikasi diterima. Jika laporan dilakukan dalam batas waktu tersebut, ketentuan pidana gratifikasi tidak berlaku bagi penerima; KPK kemudian menetapkan status kepemilikan gratifikasi tersebut."),
+    MC("TWK","Kebijakan larangan ekspor bijih nikel mentah untuk mendorong hilirisasi industri dalam negeri, yang sempat disengketakan di WTO, sering dikaitkan dengan amanat konstitusi. Pernyataan yang paling tepat mengenai landasan konstitusional dan prinsip perekonomian nasional adalah...",
+      ["Pasal 33 ayat (3): bumi, air, dan kekayaan alam dikuasai negara untuk sebesar-besar kemakmuran rakyat, dan Pasal 33 ayat (4): perekonomian diselenggarakan berdasar prinsip berkeadilan, berkelanjutan, dan berwawasan lingkungan","Pasal 33 ayat (1): bumi, air, dan kekayaan alam dikuasai negara, sedangkan ayat (2) mengatur asas kekeluargaan","Pasal 34 ayat (1): fakir miskin dan anak terlantar dipelihara oleh negara, sehingga hilirisasi wajib dilakukan","Pasal 23 ayat (1): keuangan negara dikelola secara terbuka dan bertanggung jawab, sehingga ekspor dilarang","Pasal 27 ayat (2): tiap warga negara berhak atas pekerjaan dan penghidupan layak, sehingga bahan mentah dilarang dijual"],0,
+      "Pasal 33 ayat (3) UUD 1945 menegaskan bumi, air, dan kekayaan alam dikuasai oleh negara dan dipergunakan untuk sebesar-besar kemakmuran rakyat, sedangkan ayat (4) memuat prinsip berkeadilan, berkelanjutan, berwawasan lingkungan, kemandirian, serta menjaga keseimbangan kemajuan dan kesatuan ekonomi nasional. Hilirisasi dipandang sebagai upaya meningkatkan nilai tambah sumber daya alam bagi kemakmuran rakyat. Ayat (1) memuat asas kekeluargaan, ayat (2) mengatur cabang produksi penting."),
+    MC("TWK","Keterlibatan TNI dalam penanganan Covid-19, seperti dukungan logistik, pengamanan distribusi vaksin, dan pembangunan fasilitas isolasi, serta dalam penanggulangan bencana alam, secara hukum termasuk dalam...",
+      ["Operasi Militer untuk Perang","Operasi Militer Selain Perang","Operasi intelijen strategis","Operasi teritorial rahasia","Mobilisasi Komponen Cadangan"],1,
+      "Pasal 7 ayat (2) UU Nomor 34 Tahun 2004 tentang TNI mengelompokkan tugas pokok TNI menjadi Operasi Militer untuk Perang dan Operasi Militer Selain Perang (OMSP). OMSP mencakup antara lain membantu mengatasi akibat bencana alam, memberikan bantuan kemanusiaan, dan membantu tugas pemerintahan di daerah, sehingga dukungan TNI pada masa pandemi termasuk OMSP."),
+    MC("TWK","Presidensi G20 Indonesia tahun 2022 mengusung tema 'Recover Together, Recover Stronger' dengan KTT di Bali pada November 2022. Tiga isu prioritas yang diusung adalah...",
+      ["Arsitektur kesehatan global, transformasi ekonomi berbasis digital, dan transisi energi berkelanjutan","Ketahanan pangan global, pertahanan kawasan, dan reformasi PBB","Perdagangan bebas, liberalisasi keuangan, dan pengurangan utang negara berkembang","Vaksin gratis dunia, pengungsi, dan pelestarian hutan tropis","Kemaritiman, pariwisata, dan ekonomi kreatif"],0,
+      "Tiga prioritas Presidensi G20 Indonesia 2022 adalah arsitektur kesehatan global, transformasi ekonomi berbasis digital, dan transisi energi berkelanjutan. Tema Recover Together, Recover Stronger mencerminkan semangat pemulihan bersama dari dampak pandemi Covid-19 dengan pendekatan yang inklusif."),
+    MC("TWK","Pada 2017 Indonesia memperbarui peta dan menamai perairan di utara Kepulauan Natuna sebagai Laut Natuna Utara, di tengah klaim sembilan garis putus-putus Tiongkok yang telah dinyatakan tidak memiliki dasar hukum oleh Permanent Court of Arbitration pada Juli 2016. Status hukum perairan tersebut bagi Indonesia menurut UNCLOS 1982 adalah...",
+      ["Laut teritorial yang tunduk pada kedaulatan penuh Indonesia","Zona Ekonomi Eksklusif yang memberi hak berdaulat atas sumber daya alam, bukan kedaulatan penuh","Laut lepas yang bebas dimanfaatkan seluruh negara","Perairan pedalaman Indonesia","Zona tambahan untuk pengawasan bea cukai dan imigrasi"],1,
+      "Perairan Laut Natuna Utara merupakan bagian dari Zona Ekonomi Eksklusif (ZEE) Indonesia, yakni sejauh 200 mil laut dari garis pangkal. Di ZEE, negara pantai memiliki hak berdaulat untuk eksplorasi dan eksploitasi sumber daya alam serta yurisdiksi tertentu, tetapi bukan kedaulatan penuh seperti di laut teritorial. Putusan arbitrase 2016 (Filipina vs Tiongkok) menolak dasar historis klaim sembilan garis putus-putus."),
+    MC("TWK","Indonesia meratifikasi Persetujuan Paris (Paris Agreement) melalui UU Nomor 16 Tahun 2016 dan menyampaikan Nationally Determined Contribution (NDC). Makna komitmen tersebut yang paling tepat adalah...",
+      ["Indonesia wajib menghentikan seluruh penggunaan batu bara pada 2030 dengan sanksi finansial otomatis","Indonesia berkewajiban menurunkan emisi gas rumah kaca sesuai kontribusi yang ditetapkan secara nasional serta melaporkan kemajuannya secara berkala","Indonesia dibebaskan dari kewajiban mitigasi karena berstatus negara berkembang","Indonesia hanya bertanggung jawab atas emisi yang dihasilkan sektor kehutanan","Indonesia wajib menyerahkan pengelolaan hutan tropis kepada lembaga internasional"],1,
+      "Persetujuan Paris menggunakan pendekatan bottom-up: setiap negara menetapkan NDC sendiri dan melaporkan pelaksanaannya secara berkala dalam kerangka transparansi. Ratifikasi melalui UU Nomor 16 Tahun 2016 menjadikan komitmen menurunkan emisi mengikat secara hukum, tanpa sanksi finansial otomatis dan tanpa penyerahan pengelolaan hutan kepada pihak asing."),
+    MC("TWK","Pernyataan yang benar mengenai UU Nomor 7 Tahun 2021 tentang Harmonisasi Peraturan Perpajakan (UU HPP) adalah...",
+      ["Tarif PPN naik menjadi 11% mulai 1 April 2022 dan direncanakan menjadi 12% paling lambat 1 Januari 2025","Tarif PPN naik menjadi 11% mulai 1 Januari 2022 dan langsung menjadi 12% pada 2023","Lapisan tarif tertinggi PPh orang pribadi sebesar 30% untuk penghasilan di atas Rp5 miliar","Program Pengungkapan Sukarela dilaksanakan pada 2016-2017 sebagai pengganti tax amnesty jilid pertama","Tax amnesty jilid kedua diberlakukan sepanjang 2021 untuk seluruh wajib pajak badan"],0,
+      "UU HPP menaikkan tarif PPN dari 10% menjadi 11% pada 1 April 2022 dan menjadi 12% paling lambat 1 Januari 2025, serta menambah lapisan tarif PPh orang pribadi 35% untuk penghasilan di atas Rp5 miliar. Program Pengungkapan Sukarela (PPS) dilaksanakan 1 Januari-30 Juni 2022, sedangkan tax amnesty jilid pertama dilaksanakan 2016-2017 berdasarkan UU Nomor 11 Tahun 2016."),
+    MC("TWK","Kongres Pemuda II pada 27-28 Oktober 1928 di Batavia melahirkan Sumpah Pemuda. Peristiwa atau fakta yang benar mengenai kongres tersebut adalah...",
+      ["Lagu Indonesia Raya untuk pertama kalinya diperdengarkan secara instrumental dengan biola oleh W.R. Supratman","Kongres dipimpin oleh Muhammad Yamin yang sekaligus menyusun seluruh rumusan Sumpah Pemuda","Kongres diselenggarakan di Surabaya dan dihadiri wakil-wakil BPUPKI","Rumusan Sumpah Pemuda dibacakan oleh Sutan Sjahrir di depan peserta kongres","Sumpah Pemuda menetapkan Pancasila sebagai dasar negara Indonesia merdeka"],0,
+      "Pada penutupan Kongres Pemuda II, W.R. Supratman memperdengarkan lagu Indonesia Raya secara instrumental dengan biola. Ketua kongres adalah Soegondo Djojopoespito, sedangkan Muhammad Yamin berperan sebagai sekretaris dan merumuskan teks ikrar. Kongres berlangsung di Batavia, jauh sebelum BPUPKI (1945), dan Pancasila belum dirumuskan pada saat itu."),
+    MC("TWK","Perjanjian Roem-Royen (7 Mei 1949) menjadi jembatan menuju Konferensi Meja Bundar. Salah satu kesepakatan yang tercantum dalam perjanjian tersebut adalah...",
+      ["Belanda mengakui kekuasaan de facto RI atas Jawa, Madura, dan Sumatra","Pemerintah Republik Indonesia dikembalikan ke Yogyakarta dan pihak RI menghentikan perang gerilya","Ditetapkannya garis demarkasi Van Mook sebagai batas wilayah RI dan Belanda","Pembentukan Republik Indonesia Serikat dengan enam belas negara bagian","Pembentukan Uni Indonesia-Belanda dengan Ratu Belanda sebagai kepala uni"],1,
+      "Perjanjian Roem-Royen antara lain menyepakati pengembalian pemerintah RI ke Yogyakarta, penghentian perang gerilya oleh pihak RI, pembebasan tahanan politik, serta kesediaan mengikuti KMB di Den Haag. Pengakuan de facto Jawa, Madura, dan Sumatra adalah hasil Linggarjati, garis Van Mook dikaitkan dengan Renville, sedangkan RIS dan Uni Indonesia-Belanda adalah hasil KMB."),
+    MC("TWK","Dalam penanganan pandemi Covid-19, pemerintah daerah menjalankan fasilitas kesehatan dan program vaksinasi di wilayahnya. Berdasarkan UU Nomor 23 Tahun 2014 tentang Pemerintahan Daerah, urusan pemerintahan yang BUKAN termasuk urusan pemerintahan absolut (sepenuhnya kewenangan pusat) adalah...",
+      ["Politik luar negeri","Kesehatan","Yustisi","Moneter dan fiskal nasional","Agama"],1,
+      "Urusan pemerintahan absolut menurut UU Nomor 23 Tahun 2014 meliputi politik luar negeri, pertahanan, keamanan, yustisi, moneter dan fiskal nasional, serta agama. Kesehatan termasuk urusan pemerintahan konkuren, yaitu urusan yang dibagi antara pemerintah pusat, provinsi, dan kabupaten/kota, dengan kesehatan sebagai salah satu urusan wajib berkaitan dengan pelayanan dasar."),
+    MC("TWK","Program vaksinasi Covid-19 gratis dengan pembiayaan APBN bagi seluruh warga, yang memberi prioritas awal kepada tenaga kesehatan dan lansia berdasarkan tingkat risiko serta menjamin pemerataan akses tanpa memandang kemampuan ekonomi, paling tepat mencerminkan pengamalan sila...",
+      ["Ketuhanan Yang Maha Esa","Persatuan Indonesia","Kerakyatan yang Dipimpin oleh Hikmat Kebijaksanaan dalam Permusyawaratan/Perwakilan","Keadilan Sosial bagi Seluruh Rakyat Indonesia","Kemanusiaan yang Adil dan Beradab"],3,
+      "Pemerataan akses layanan vaksin secara gratis dan pemberian prioritas berdasarkan kebutuhan serta risiko, bukan kemampuan bayar, mencerminkan keadilan distributif sebagaimana sila kelima, Keadilan Sosial bagi Seluruh Rakyat Indonesia, yang menekankan pemerataan kesejahteraan dan perlakuan adil bagi seluruh rakyat."),
+    MC("TWK","Pilkada serentak 2020 yang semula dijadwalkan 23 September 2020 ditunda karena pandemi Covid-19 dan dilaksanakan pada 9 Desember 2020. Dasar hukum penundaan tersebut adalah...",
+      ["Peraturan Pemerintah Pengganti Undang-Undang Nomor 2 Tahun 2020 yang ditetapkan menjadi UU Nomor 6 Tahun 2020","Peraturan Pemerintah Pengganti Undang-Undang Nomor 1 Tahun 2020 yang ditetapkan menjadi UU Nomor 2 Tahun 2020","Keputusan Presiden Nomor 12 Tahun 2020 tentang Bencana Nonalam","Peraturan Pemerintah Nomor 21 Tahun 2020 tentang PSBB","Putusan Mahkamah Konstitusi tentang penundaan pemilihan kepala daerah"],0,
+      "Penundaan Pilkada 2020 dilakukan melalui Perppu Nomor 2 Tahun 2020 (perubahan ketiga atas UU Pilkada) yang kemudian ditetapkan menjadi UU Nomor 6 Tahun 2020, dengan pemungutan suara pada 9 Desember 2020. Perppu Nomor 1 Tahun 2020 mengatur kebijakan keuangan negara, Keppres 12/2020 status bencana nasional, dan PP 21/2020 PSBB."),
+    MC("TWK","Dalam pidato pelantikan Presiden pada 20 Oktober 2019, disampaikan kebijakan penyederhanaan birokrasi menjadi dua level, yaitu jabatan pimpinan tinggi (eselon I dan II) yang tetap dipertahankan. Jabatan yang dialihkan menjadi jabatan fungsional dalam kebijakan tersebut adalah...",
+      ["Eselon I dan II","Eselon III, IV, dan V","Hanya Eselon II","Hanya Eselon I","Eselon II dan III"],1,
+      "Kebijakan penyederhanaan birokrasi mempertahankan dua level jabatan pimpinan tinggi (eselon I dan II), sedangkan jabatan administrasi eselon III, IV, dan V dialihkan menjadi jabatan fungsional. Tujuannya membuat birokrasi lebih ramping, cepat, dan berorientasi pada keahlian serta kinerja, sejalan dengan reformasi birokrasi dan sistem merit."),
+    // ============================================================
+    // BAGIAN TIU (HOTS Sangat Tinggi) — 35 SOAL — BAGIAN KE-33 (Verbal 12, Numerik 14, Figural Bergambar 9)
+    // ============================================================
+    // --- Verbal: Analogi (4) ---
+    MC("TIU","KARANTINA : PENULARAN = TANGGUL : ...",
+      ["Banjir","Sungai","Air","Bendungan","Hujan"],0,
+      "Karantina berfungsi mencegah terjadinya penularan penyakit, sebagaimana tanggul berfungsi mencegah terjadinya banjir. Hubungan analogi ini adalah alat pencegah dengan hal yang dicegahnya."),
+    MC("TIU","PANDEMI : EPIDEMI = SAMUDRA : ...",
+      ["Laut","Air","Ombak","Pantai","Pulau"],0,
+      "Pandemi adalah wabah penyakit dengan cakupan lebih luas (lintas negara/benua) daripada epidemi yang cakupannya lebih terbatas. Demikian pula samudra memiliki cakupan lebih luas daripada laut. Hubungan analogi ini adalah tingkat cakupan dari yang lebih luas ke yang lebih terbatas."),
+    MC("TIU","VAKSINASI : KEKEBALAN = PELATIHAN : ...",
+      ["Kompetensi","Pelatih","Peserta","Sertifikat","Kurikulum"],0,
+      "Vaksinasi bertujuan menghasilkan kekebalan tubuh, sebagaimana pelatihan bertujuan menghasilkan kompetensi. Hubungan analogi ini adalah proses dengan hasil yang dituju."),
+    MC("TIU","INKUBASI : GEJALA = GESTASI : ...",
+      ["Kelahiran","Kehamilan","Ibu","Bayi","Rahim"],0,
+      "Masa inkubasi adalah rentang waktu yang berakhir dengan munculnya gejala penyakit, sebagaimana masa gestasi adalah rentang waktu yang berakhir dengan kelahiran. Hubungan analogi ini adalah masa berlangsungnya proses dengan titik akhir yang mengakhirinya."),
+    // --- Verbal: Silogisme & Logika (4) ---
+    MC("TIU","Semua ASN yang mengikuti diklat kepemimpinan wajib mendapat sertifikat. Sebagian ASN di Dinas X tidak mendapat sertifikat. Simpulan yang PASTI benar adalah...",
+      ["Sebagian ASN di Dinas X tidak mengikuti diklat kepemimpinan","Semua ASN di Dinas X mengikuti diklat kepemimpinan","Sebagian ASN di Dinas X yang tidak mengikuti diklat pasti mendapat sertifikat","Tidak ada ASN di Dinas X yang mengikuti diklat kepemimpinan","Semua ASN di Dinas X tidak mendapat sertifikat"],0,
+      "Premis pertama: jika mengikuti diklat maka mendapat sertifikat. Kontraposisinya: jika tidak mendapat sertifikat maka tidak mengikuti diklat. Karena sebagian ASN Dinas X tidak mendapat sertifikat, sebagian ASN tersebut pasti tidak mengikuti diklat. Simpulan lain tidak dapat dipastikan dari premis."),
+    MC("TIU","Jika vaksinasi berjalan merata, maka kekebalan kelompok tercapai. Jika kekebalan kelompok tercapai, maka pembatasan kegiatan masyarakat dilonggarkan. Pembatasan kegiatan masyarakat tidak dilonggarkan. Simpulan yang PASTI benar adalah...",
+      ["Vaksinasi tidak berjalan merata","Kekebalan kelompok tercapai namun vaksinasi tidak merata","Vaksinasi berjalan merata tetapi kekebalan kelompok tidak tercapai","Kekebalan kelompok tercapai","Vaksinasi berjalan merata"],0,
+      "Rantai implikasi: V (vaksinasi merata) maka K (kekebalan kelompok) maka L (pelonggaran). Diketahui bukan L. Dengan modus tollens berantai, bukan L maka bukan K, dan bukan K maka bukan V. Jadi vaksinasi tidak berjalan merata."),
+    MC("TIU","Tidak ada pejabat berintegritas yang menerima suap. Sebagian pejabat di Kantor Z menerima suap. Simpulan yang PASTI benar adalah...",
+      ["Sebagian pejabat di Kantor Z tidak berintegritas","Semua pejabat di Kantor Z tidak berintegritas","Sebagian pejabat di Kantor Z berintegritas","Semua pejabat yang tidak berintegritas menerima suap","Sebagian pejabat yang menerima suap berintegritas"],0,
+      "Premis pertama: pejabat berintegritas dan penerima suap adalah himpunan yang saling lepas. Karena sebagian pejabat Kantor Z termasuk penerima suap, mereka pasti tidak berintegritas. Simpulan bahwa semua pejabat Kantor Z tidak berintegritas tidak dapat ditarik karena hanya sebagian yang diketahui menerima suap."),
+    MC("TIU","Tiga petugas P, Q, dan R diselidiki karena salah satunya membocorkan data pemohon. P berkata: 'Bukan saya pelakunya.' Q berkata: 'R pelakunya.' R berkata: 'Q berbohong.' Jika hanya satu pernyataan yang benar dan tepat satu orang pelakunya, maka pelakunya adalah...",
+      ["P","Q","R","P atau Q","Tidak dapat ditentukan"],0,
+      "Uji setiap kemungkinan. Jika P pelaku: pernyataan P salah, pernyataan Q salah (R bukan pelaku), pernyataan R benar (Q memang berbohong), sehingga tepat satu pernyataan benar. Jika Q pelaku: pernyataan P dan R benar (dua benar), tidak memenuhi syarat. Jika R pelaku: pernyataan P dan Q benar, tidak memenuhi syarat. Jadi pelakunya P."),
+    // --- Verbal: Analitis (4) ---
+    MC("TIU","Enam pegawai A, B, C, D, E, dan F duduk berjajar dalam satu baris pada kursi bernomor 1 sampai 6 dari kiri ke kanan, dengan ketentuan: (1) A dan B duduk bersebelahan; (2) C duduk di salah satu ujung barisan; (3) D tidak duduk bersebelahan dengan C; (4) E duduk di sebelah kiri D (tidak harus bersebelahan); (5) F duduk tepat di antara B dan D; (6) A duduk di sebelah kanan C (tidak harus bersebelahan). Jika D duduk di kursi nomor 6, maka pegawai yang duduk di kursi nomor 3 adalah...",
+      ["A","B","C","E","F"],0,
+      "C harus di ujung dan A di kanan C, sehingga C di kursi 1. Jika D di kursi 6, F di antara B dan D dan bersebelahan dengan keduanya sehingga F di kursi 5 dan B di kursi 4. A bersebelahan dengan B sehingga A di kursi 3, dan E di kursi 2. Susunan: C, E, A, B, F, D, sehingga kursi nomor 3 diduduki A."),
+    MC("TIU","Lima petugas P, Q, R, S, dan T masing-masing bertugas piket satu hari dari Senin sampai Jumat (satu petugas per hari). Ketentuan: (1) R piket tepat dua hari setelah Q; (2) S tidak piket pada hari Senin maupun Jumat; (3) T piket tepat sehari setelah P. Jika P piket pada hari Senin, maka petugas yang piket pada hari Kamis adalah...",
+      ["P","Q","R","S","T"],3,
+      "P piket Senin sehingga T piket Selasa. Sisa hari Rabu, Kamis, Jumat untuk Q, R, dan S. R tepat dua hari setelah Q, sehingga Q Rabu dan R Jumat. S mendapat Kamis (yang juga memenuhi syarat S tidak piket Senin atau Jumat). Jadi yang piket Kamis adalah S."),
+    MC("TIU","Pernyataan: 'Tidak benar bahwa jika instansi menerapkan SPBE maka pelayanan menjadi cepat dan murah.' Pernyataan yang ekuivalen secara logika dengan pernyataan tersebut adalah...",
+      ["Instansi menerapkan SPBE dan pelayanan tidak cepat atau tidak murah","Instansi tidak menerapkan SPBE dan pelayanan tidak cepat dan tidak murah","Jika instansi tidak menerapkan SPBE maka pelayanan tidak cepat atau tidak murah","Instansi menerapkan SPBE dan pelayanan tidak cepat dan tidak murah","Jika pelayanan cepat dan murah maka instansi tidak menerapkan SPBE"],0,
+      "Negasi implikasi p maka q adalah p dan bukan q. Di sini p adalah 'instansi menerapkan SPBE' dan q adalah 'pelayanan cepat dan murah'. Negasi q, menurut hukum De Morgan, adalah 'tidak cepat atau tidak murah'. Jadi ekuivalennya adalah instansi menerapkan SPBE dan pelayanan tidak cepat atau tidak murah."),
+    MC("TIU","Dari 120 pegawai suatu kantor, 70 orang menguasai aplikasi A, 60 orang menguasai aplikasi B, dan 50 orang menguasai aplikasi C. Sebanyak 30 orang menguasai A dan B, 25 orang menguasai B dan C, 20 orang menguasai A dan C, serta 12 orang menguasai ketiganya. Banyak pegawai yang menguasai TEPAT SATU aplikasi adalah...",
+      ["56 orang","62 orang","66 orang","72 orang","78 orang"],2,
+      "Hanya A = 70 - 30 - 20 + 12 = 32. Hanya B = 60 - 30 - 25 + 12 = 17. Hanya C = 50 - 25 - 20 + 12 = 17. Total tepat satu aplikasi = 32 + 17 + 17 = 66 orang."),
+    // ============================================================
+    // Numerik (14)
+    // ============================================================
+    MC("TIU","Perhatikan barisan berikut: 4, 6, 12, 30, 90, ... Suku selanjutnya adalah...",
+      ["270","300","315","360","405"],2,
+      "Setiap suku dikalikan bilangan yang naik 0,5: 4 x 1,5 = 6; 6 x 2 = 12; 12 x 2,5 = 30; 30 x 3 = 90; sehingga suku berikutnya 90 x 3,5 = 315."),
+    MC("TIU","Perhatikan barisan berikut: 7, 2, 14, 5, 28, 10, 56, ... Suku selanjutnya adalah...",
+      ["15","16","17","18","112"],2,
+      "Barisan merupakan gabungan dua pola berselang-seling. Suku ke-1, 3, 5, 7: 7, 14, 28, 56 (dikali 2). Suku ke-2, 4, 6, 8: 2, 5, 10, ... dengan selisih 3, 5, 7, sehingga suku ke-8 = 10 + 7 = 17."),
+    MC("TIU","Sebuah kota melakukan 10.000 tes PCR dalam satu minggu dengan 1.000 hasil positif. Pada minggu berikutnya jumlah tes naik 25% sedangkan jumlah hasil positif turun 20%. Tingkat kepositifan (positivity rate) pada minggu berikutnya adalah...",
+      ["6,4%","8%","9,6%","10%","12,5%"],0,
+      "Minggu berikutnya: jumlah tes = 10.000 x 1,25 = 12.500 dan jumlah positif = 1.000 x 0,8 = 800. Positivity rate = 800 / 12.500 = 0,064 = 6,4%. Perhatikan bahwa persentase kepositifan turun lebih tajam daripada penurunan jumlah kasus karena penyebutnya (jumlah tes) ikut naik."),
+    MC("TIU","Sebuah kabupaten memiliki 240.000 warga sasaran vaksinasi. Pada minggu pertama 15% warga sasaran divaksinasi. Pada minggu kedua, 20% dari warga yang belum divaksinasi di akhir minggu pertama divaksinasi. Pada minggu ketiga, 25% dari warga yang belum divaksinasi di akhir minggu kedua divaksinasi. Jumlah warga sasaran yang belum divaksinasi setelah tiga minggu adalah...",
+      ["108.000 orang","115.200 orang","122.400 orang","129.600 orang","136.000 orang"],2,
+      "Sisa setelah tiga minggu = 240.000 x (1 - 0,15) x (1 - 0,20) x (1 - 0,25) = 240.000 x 0,85 x 0,80 x 0,75 = 240.000 x 0,51 = 122.400 orang."),
+    MC("TIU","Pekerjaan pendataan warga rentan dapat diselesaikan oleh 6 petugas dalam 20 hari. Setelah bekerja 8 hari, 2 petugas ditarik untuk tugas lain. Setelah 6 hari berikutnya, ditambahkan 4 petugas baru sehingga jumlah petugas menjadi 8 orang hingga pekerjaan selesai. Jika semua petugas bekerja dengan kecepatan sama, total waktu penyelesaian pekerjaan sejak awal adalah...",
+      ["18 hari","19 hari","20 hari","21 hari","22 hari"],2,
+      "Total pekerjaan = 6 x 20 = 120 petugas-hari. Delapan hari pertama: 6 x 8 = 48. Enam hari berikutnya dengan 4 petugas: 4 x 6 = 24. Sisa = 120 - 48 - 24 = 48 petugas-hari. Dengan 8 petugas, sisa selesai dalam 48 / 8 = 6 hari. Total = 8 + 6 + 6 = 20 hari."),
+    MC("TIU","Pada September 2022 harga BBM disesuaikan sebagai berikut (Rp per liter): Pertalite dari 7.650 menjadi 10.000; Solar dari 5.150 menjadi 6.800; Pertamax dari 12.500 menjadi 14.500. Urutan persentase kenaikan harga dari yang terbesar ke terkecil adalah...",
+      ["Solar, Pertalite, Pertamax","Pertalite, Solar, Pertamax","Pertamax, Solar, Pertalite","Solar, Pertamax, Pertalite","Pertalite, Pertamax, Solar"],0,
+      "Solar naik 1.650/5.150 = 32,0%; Pertalite naik 2.350/7.650 = sekitar 30,7%; Pertamax naik 2.000/12.500 = 16,0%. Urutan dari terbesar: Solar, Pertalite, Pertamax. Kenaikan nominal terbesar (Rp2.350) dimiliki Pertalite, tetapi kenaikan persentase terbesar dimiliki Solar karena harga awalnya lebih rendah."),
+    MC("TIU","Sebuah tim terdiri atas 5 orang dipilih dari 7 pegawai laki-laki dan 5 pegawai perempuan. Banyak cara membentuk tim yang beranggotakan minimal 2 perempuan adalah...",
+      ["546 cara","576 cara","596 cara","616 cara","636 cara"],2,
+      "Total cara = C(12,5) = 792. Tanpa perempuan: C(7,5) = 21. Tepat 1 perempuan: 5 x C(7,4) = 5 x 35 = 175. Minimal 2 perempuan = 792 - 21 - 175 = 596 cara."),
+    MC("TIU","Kereta A berangkat dari kota P menuju kota Q pukul 08.00 dengan kecepatan 60 km/jam. Kereta B berangkat dari kota Q menuju kota P pukul 09.00 dengan kecepatan 90 km/jam. Jarak P dan Q adalah 420 km dan kedua kereta melewati jalur yang sama. Kedua kereta berpapasan pada pukul...",
+      ["11.00","11.12","11.24","11.30","11.36"],2,
+      "Pada pukul 09.00 kereta A telah menempuh 60 km sehingga sisa jarak 360 km. Kecepatan relatif = 60 + 90 = 150 km/jam, sehingga waktu berpapasan = 360 / 150 = 2,4 jam = 2 jam 24 menit setelah pukul 09.00, yaitu pukul 11.24."),
+    MC("TIU","Seorang pelaku UMKM meminjam Rp100.000.000 selama 2 tahun dengan bunga 6% per tahun. Selisih total bunga jika dihitung dengan bunga majemuk tahunan dibandingkan bunga sederhana adalah...",
+      ["Rp240.000","Rp360.000","Rp600.000","Rp720.000","Rp1.200.000"],1,
+      "Bunga sederhana = 100.000.000 x 6% x 2 = Rp12.000.000. Bunga majemuk = 100.000.000 x (1,06^2 - 1) = 100.000.000 x 0,1236 = Rp12.360.000. Selisih = Rp360.000."),
+    MC("TIU","Untuk membuat cairan disinfektan, sebanyak 40 liter larutan alkohol berkadar 30% dicampur dengan larutan alkohol berkadar 60% hingga diperoleh campuran berkadar 50%. Banyak larutan berkadar 60% yang harus ditambahkan adalah...",
+      ["40 liter","60 liter","80 liter","100 liter","120 liter"],2,
+      "Misalkan larutan 60% yang ditambahkan x liter. Alkohol murni: 0,3 x 40 + 0,6x = 0,5 x (40 + x), sehingga 12 + 0,6x = 20 + 0,5x, maka 0,1x = 8 dan x = 80 liter."),
+    MC("TIU","Rata-rata nilai 20 peserta seleksi adalah 72. Setelah 5 peserta mengundurkan diri, rata-rata nilai peserta yang tersisa menjadi 75. Rata-rata nilai kelima peserta yang mengundurkan diri adalah...",
+      ["60","63","65","66","68"],1,
+      "Jumlah nilai awal = 20 x 72 = 1.440. Jumlah nilai 15 peserta tersisa = 15 x 75 = 1.125. Jumlah nilai 5 peserta yang mundur = 1.440 - 1.125 = 315, sehingga rata-ratanya = 315 / 5 = 63."),
+    MC("TIU","Jika a + b = 6 dan ab = 7, maka nilai a^3 + b^3 adalah...",
+      ["72","78","84","90","96"],3,
+      "Gunakan identitas a^3 + b^3 = (a + b)^3 - 3ab(a + b) = 6^3 - 3 x 7 x 6 = 216 - 126 = 90."),
+    MC("TIU","Sebuah papan informasi berbentuk segitiga sama sisi dengan panjang sisi 12 cm. Luas lingkaran terbesar yang dapat dimuat di dalam papan tersebut (lingkaran dalam) adalah...",
+      ["6\u03C0 cm\u00B2","9\u03C0 cm\u00B2","12\u03C0 cm\u00B2","16\u03C0 cm\u00B2","36\u03C0 cm\u00B2"],2,
+      "Jari-jari lingkaran dalam segitiga sama sisi dengan sisi a adalah a / (2\u221A3) = 12 / (2\u221A3) = 2\u221A3 cm. Luas lingkaran = \u03C0 x (2\u221A3)^2 = 12\u03C0 cm\u00B2."),
+    MC("TIU","Seorang petugas pergi dari kantor ke lokasi survei sejauh 120 km dengan kecepatan 60 km/jam, lalu kembali melalui rute yang sama dengan kecepatan 40 km/jam. Selama perjalanan, ia beristirahat total 1 jam (tidak bergerak). Kecepatan rata-rata perjalanan pulang-pergi, termasuk waktu istirahat, adalah...",
+      ["36 km/jam","40 km/jam","44 km/jam","48 km/jam","50 km/jam"],1,
+      "Waktu pergi = 120 / 60 = 2 jam dan waktu pulang = 120 / 40 = 3 jam. Dengan istirahat 1 jam, total waktu = 6 jam. Total jarak = 240 km. Kecepatan rata-rata = 240 / 6 = 40 km/jam."),
+    // ============================================================
+    // Figural Bergambar (9) — 3 di antaranya SUPER HOTS
+    // ============================================================
+    MC("TIU", figIntro("Perhatikan pola rotasi anak panah berikut. Sudut putar searah jarum jam bertambah dengan selisih yang terus membesar dari satu gambar ke gambar berikutnya. Tentukan gambar selanjutnya:") + row([arrowSvg(0), arrowSvg(45), arrowSvg(135), arrowSvg(270), qMark()]),
+      [arrowSvg(90), arrowSvg(180), arrowSvg(45), arrowSvg(270), arrowSvg(0)],0,
+      "Posisi sudut: 0, 45, 135, 270 dengan selisih 45, 90, 135, sehingga selisih berikutnya 180 dan posisi selanjutnya 270 + 180 = 450 derajat, yang setara dengan 90 derajat setelah dikurangi satu putaran penuh (360). Jadi gambar selanjutnya adalah anak panah pada posisi 90 derajat."),
+    MC("TIU", figIntroExtreme("Perhatikan pola yang menggabungkan DUA aturan sekaligus: jumlah sudut bintang bertambah 1 pada setiap langkah, DAN warna mengikuti siklus tiga warna yaitu ungu, oranye, hijau, lalu kembali ke ungu. Tentukan gambar selanjutnya:") + row([starPoly(3,'#7c3aed'), starPoly(4,'#f97316'), starPoly(5,'#10b981'), qMark()]),
+      [starPoly(6,'#7c3aed'), starPoly(6,'#f97316'), starPoly(7,'#7c3aed'), starPoly(6,'#10b981'), starPoly(5,'#7c3aed')],0,
+      "Aturan jumlah sudut: 3, 4, 5, sehingga berikutnya 6. Aturan warna siklus tiga: ungu, oranye, hijau, sehingga langkah keempat kembali ke ungu. Jawaban harus memenuhi kedua aturan sekaligus, yaitu bintang bersudut 6 berwarna ungu."),
+    MC("TIU", figIntro("Perhatikan matriks 3x3 berikut. Baris menentukan besar bagian yang diarsir (baris 1: seperempat, baris 2: setengah, baris 3: tiga perempat), sedangkan kolom menentukan warna (kolom 1: biru, kolom 2: oranye, kolom 3: hijau). Tentukan gambar yang tepat untuk mengisi kotak kosong:") + matrixGrid([pieSvg(0.25,'#3b82f6'), pieSvg(0.25,'#f97316'), pieSvg(0.25,'#10b981'), pieSvg(0.5,'#3b82f6'), pieSvg(0.5,'#f97316'), pieSvg(0.5,'#10b981'), pieSvg(0.75,'#3b82f6'), pieSvg(0.75,'#f97316'), qMark()]),
+      [pieSvg(0.75,'#10b981'), pieSvg(0.75,'#f97316'), pieSvg(0.5,'#10b981'), pieSvg(0.25,'#10b981'), pieSvg(0.75,'#3b82f6')],0,
+      "Kotak kosong berada di baris ke-3 (tiga perempat bagian diarsir) dan kolom ke-3 (warna hijau). Maka gambar yang tepat adalah lingkaran dengan tiga perempat bagian diarsir berwarna hijau."),
+    MC("TIU", figIntro("Perhatikan lima bangun datar berikut. Empat di antaranya memiliki jumlah sisi yang sama, sedangkan satu bangun memiliki jumlah sisi berbeda (meskipun tampak serupa karena diputar dengan sudut berbeda). Manakah gambar yang berbeda tersebut?") + labeledRow([poly(6,'#bfdbfe',-90), poly(6,'#bfdbfe',-60), poly(6,'#bfdbfe',-30), poly(7,'#bfdbfe',0), poly(6,'#bfdbfe',30)], ['A','B','C','D','E']),
+      ["Gambar A","Gambar B","Gambar C","Gambar D","Gambar E"],3,
+      "Gambar A, B, C, dan E merupakan segienam beraturan yang hanya diputar dengan sudut berbeda, sedangkan gambar D merupakan segitujuh (memiliki 7 sisi). Rotasi tidak mengubah jumlah sisi sehingga gambar D adalah yang berbeda."),
+    MC("TIU", figIntro("Perhatikan pola rotasi bendera berikut. Sudut putar searah jarum jam bertambah dengan selisih 30, 60, 90 derajat, dan seterusnya. Tentukan gambar selanjutnya:") + row([flagRotated(0), flagRotated(30), flagRotated(90), flagRotated(180), qMark()]),
+      [flagRotated(300), flagRotated(270), flagRotated(240), flagRotated(330), flagRotated(0)],0,
+      "Posisi sudut: 0, 30, 90, 180 dengan selisih 30, 60, 90, sehingga selisih berikutnya 120 dan posisi selanjutnya 180 + 120 = 300 derajat."),
+    MC("TIU", figIntroExtreme("Perhatikan pola yang menggabungkan DUA aturan sekaligus: jumlah persegi bersarang bertambah 1 pada setiap langkah, DAN warna garis berganti secara berselang-seling antara merah dan biru. Tentukan gambar selanjutnya:") + row([nestedSquares(1,'#dc2626'), nestedSquares(2,'#2563eb'), nestedSquares(3,'#dc2626'), qMark()]),
+      [nestedSquares(4,'#2563eb'), nestedSquares(4,'#dc2626'), nestedSquares(5,'#2563eb'), nestedSquares(3,'#2563eb'), nestedSquares(5,'#dc2626')],0,
+      "Jumlah persegi bersarang: 1, 2, 3, sehingga berikutnya 4. Warna berselang-seling merah, biru, merah, sehingga berikutnya biru. Jawaban yang tepat adalah 4 persegi bersarang berwarna biru."),
+    MC("TIU", figIntroExtreme("Perhatikan matriks 3x3 berikut. Setiap baris menentukan jumlah sisi bangun (baris 1: segitiga, baris 2: segiempat, baris 3: segilima). Setiap kolom menentukan sudut putar bangun (kolom 1: -90 derajat, kolom 2: -45 derajat, kolom 3: 0 derajat). Bangun berwarna biru tua HANYA jika jumlah nomor baris dan nomor kolomnya genap; jika ganjil, bangun tidak berisi warna. Tentukan gambar yang tepat untuk kotak kosong pada baris ke-3 kolom ke-3:") + matrixGrid([poly(3,'#1e3a8a',-90), poly(3,'none',-45), poly(3,'#1e3a8a',0), poly(4,'none',-90), poly(4,'#1e3a8a',-45), poly(4,'none',0), poly(5,'#1e3a8a',-90), poly(5,'none',-45), qMark()]),
+      [poly(5,'#1e3a8a',0), poly(5,'none',0), poly(5,'#1e3a8a',-45), poly(4,'#1e3a8a',0), poly(6,'#1e3a8a',0)],0,
+      "Baris ke-3 berarti segilima dan kolom ke-3 berarti sudut putar 0 derajat. Jumlah nomor baris dan kolom = 3 + 3 = 6 (genap), sehingga bangun harus berwarna biru tua penuh. Jawaban yang memenuhi ketiga aturan sekaligus adalah segilima berwarna biru tua dengan sudut putar 0 derajat."),
+    MC("TIU", figIntro("Perhatikan lima bangun berikut. Empat di antaranya sama persis (hanya digeser), sedangkan satu merupakan bayangan cermin (pencerminan) dari bentuk lainnya sehingga tidak dapat ditumpangkan hanya dengan pergeseran. Manakah gambar yang dimaksud?") + labeledRow([diagShape(false), diagShape(false), diagShape(false), diagShape(true), diagShape(false)], ['A','B','C','D','E']),
+      ["Gambar A","Gambar B","Gambar C","Gambar D","Gambar E"],3,
+      "Gambar A, B, C, dan E memiliki bentuk yang sama persis, sedangkan gambar D merupakan hasil pencerminan sehingga arah tonjolannya berlawanan dan tidak dapat ditumpangkan hanya dengan pergeseran."),
+    MC("TIU", figIntro("Perhatikan pola jumlah kotak terarsir berikut. Jumlah kotak terarsir berubah dengan pola +2, -1, +2, dan seterusnya. Tentukan gambar selanjutnya:") + row([gridShade(1), gridShade(3), gridShade(2), qMark()]),
+      [gridShade(4), gridShade(3), gridShade(2), gridShade(1), gridShade(0)],0,
+      "Jumlah kotak terarsir: 1, 3, 2, dan seterusnya dengan perubahan +2, -1, +2. Perubahan ketiga adalah +2 sehingga suku selanjutnya 2 + 2 = 4, yaitu keempat kotak terarsir."),
+    // ============================================================
+    // BAGIAN TKP (HOTS Sangat Tinggi) — 45 SOAL — BAGIAN KE-33 (Situasi kekinian 10 tahun terakhir)
+    // ============================================================
+    TKP("Di grup WhatsApp warga RW tempat Anda bertugas sebagai petugas kelurahan, beredar pesan berantai bahwa vaksin Covid-19 mengandung zat berbahaya dan menyebabkan kemandulan. Beberapa warga lansia menjadi ragu untuk divaksin. Sikap Anda adalah...",
+      [["Membiarkan pesan tersebut karena grup WhatsApp adalah ruang privat warga",1],["Menjelaskan secara santun di grup dengan merujuk data dari sumber resmi Kementerian Kesehatan serta menawarkan sesi tanya jawab langsung bersama tenaga kesehatan puskesmas bagi warga yang ragu",5],["Menghapus pesan tersebut dan mengeluarkan penyebarnya dari grup tanpa penjelasan",2],["Mengunggah pernyataan bahwa penyebar hoaks akan dilaporkan ke polisi agar warga takut menyebarkan lagi",2],["Membalas dengan kutipan artikel ilmiah berbahasa asing agar terlihat meyakinkan",3]],
+      "Klarifikasi berbasis sumber resmi disertai fasilitasi dialog dengan tenaga kesehatan menunjukkan kemampuan komunikasi publik yang empatik dan solutif dalam menangkal disinformasi tanpa menakut-nakuti atau membungkam warga."),
+    TKP("Instansi Anda menerapkan kebijakan bekerja dari mana saja (Work From Anywhere) bagi sebagian pegawai. Atasan meminta kinerja tetap terukur, namun beberapa rekan mulai sulit dihubungi pada jam kerja. Sebagai anggota tim, sikap Anda adalah...",
+      [["Melaporkan rekan-rekan yang sulit dihubungi kepada atasan tanpa berbicara dengan mereka terlebih dahulu",2],["Mengusulkan kesepakatan tim tentang jam ketersediaan, kanal komunikasi, dan pelaporan capaian harian yang transparan, lalu menjalankannya terlebih dahulu sebagai contoh",5],["Ikut mengurangi respons agar setara dengan rekan lain",1],["Menyarankan agar kebijakan tersebut dihentikan karena merugikan koordinasi",2],["Tetap bekerja seperti biasa tanpa membahasnya karena itu urusan masing-masing",3]],
+      "Menyepakati aturan main tim dan memberi teladan mencerminkan kolaborasi, tanggung jawab, dan orientasi pada hasil pada pola kerja fleksibel, tanpa menyalahkan atau menghakimi rekan lebih dulu."),
+    TKP("Sebagai petugas verifikasi data bantuan sosial, Anda menemukan bahwa seorang tetangga dekat Anda yang secara ekonomi mampu tercatat sebagai penerima, sedangkan warga miskin di RT sebelah belum terdata. Sikap Anda adalah...",
+      [["Membiarkan data tetangga karena tidak ingin merusak hubungan baik",1],["Memverifikasi kondisi sesuai kriteria melalui pemeriksaan lapangan dan musyawarah desa/kelurahan, lalu mengusulkan pembaruan data agar tepat sasaran sesuai prosedur",5],["Mencoret data tetangga secara langsung tanpa verifikasi dan mengganti dengan warga miskin yang Anda kenal",2],["Menegur tetangga tersebut secara pribadi agar mengundurkan diri sebagai penerima tanpa laporan resmi",3],["Meminta warga miskin yang belum terdata mengurus sendiri ke pusat karena bukan kewenangan Anda",2]],
+      "Verifikasi berbasis kriteria dan musyawarah menjamin ketepatan sasaran bantuan serta menghindari konflik kepentingan, sesuai prinsip objektivitas dan akuntabilitas pelayanan publik."),
+    TKP("Saat merapikan meja loket, Anda menemukan tumpukan fotokopi KTP dan kartu keluarga pemohon layanan tergeletak terbuka dan mudah diakses pengunjung. Sikap Anda adalah...",
+      [["Membiarkan karena berkas itu bukan tanggung jawab Anda",1],["Mengamankan berkas tersebut, melaporkannya kepada atasan, serta mengusulkan prosedur penyimpanan dan pemusnahan berkas yang menjamin pelindungan data pribadi pemohon",5],["Membuang seluruh berkas ke tempat sampah agar tidak disalahgunakan",1],["Memindahkan berkas ke laci Anda sendiri tanpa memberi tahu siapa pun",3],["Menegur rekan yang meletakkannya di depan pengunjung tanpa melaporkan pada atasan",3]],
+      "Mengamankan berkas, melapor, dan mengusulkan perbaikan prosedur mencerminkan kepedulian terhadap pelindungan data pribadi warga sebagaimana amanat UU Pelindungan Data Pribadi serta tanggung jawab profesional."),
+    TKP("Anda dan sejumlah rekan ditugaskan pindah ke Ibu Kota Nusantara secara bertahap. Sebagian rekan mengeluh karena harus meninggalkan keluarga, dan tim mulai kehilangan semangat. Sikap Anda adalah...",
+      [["Ikut mengeluh agar rekan merasa dipahami",1],["Mengajak rekan berdiskusi mencari solusi, misalnya jadwal kepulangan berkala dan dukungan adaptasi, sambil tetap melaksanakan penugasan dengan profesional",5],["Menolak penugasan karena tidak sesuai dengan rencana pribadi",1],["Menganggap keluhan rekan sebagai sikap tidak nasionalis dan menegurnya di depan umum",2],["Menyimpan perasaan sendiri dan hanya fokus pada tugas tanpa peduli kondisi rekan",3]],
+      "Menunjukkan empati sekaligus mendorong solusi konstruktif mencerminkan adaptabilitas, kepemimpinan, dan komitmen pada tugas negara tanpa mengabaikan kondisi manusiawi rekan kerja."),
+    TKP("Seorang atasan meminta seluruh pegawai hadir dengan seragam kantor pada kegiatan kampanye pasangan calon kepala daerah pada akhir pekan dan mengatakan bahwa ketidakhadiran akan memengaruhi penilaian kinerja. Sikap Anda adalah...",
+      [["Hadir agar tidak dianggap membangkang atasan",1],["Menolak secara santun karena ASN wajib netral, menjelaskan dasar aturannya kepada atasan, dan melaporkan permintaan tersebut melalui kanal pengaduan yang tersedia jika instruksi tetap dipaksakan",5],["Hadir tetapi tidak mengenakan atribut kampanye sehingga merasa tetap netral",2],["Berpura-pura sakit pada hari kegiatan untuk menghindari konflik",2],["Membocorkan instruksi tersebut ke media sosial agar mendapat dukungan publik",2]],
+      "ASN wajib menjaga netralitas dan menolak instruksi yang bertentangan dengan aturan. Penolakan santun disertai pelaporan lewat kanal resmi menunjukkan integritas tanpa menimbulkan kegaduhan yang tidak perlu."),
+    TKP("Seorang rekan sejawat yang golongannya sama dengan Anda tiba-tiba sering memamerkan barang mewah dan gaya hidup di media sosial yang tampak tidak sesuai dengan penghasilannya. Sikap Anda adalah...",
+      [["Menyindirnya secara terbuka di media sosial agar malu",1],["Tidak menyimpulkan lebih dahulu, tetapi menyampaikan kekhawatiran secara bijak kepadanya dan, bila terdapat indikasi kuat, melaporkannya melalui mekanisme pengaduan internal atau whistleblowing system",5],["Mengabaikan karena kekayaan orang lain bukan urusan Anda",2],["Menyebarkan dugaan tersebut kepada rekan-rekan kantor agar ia dikucilkan",1],["Meminta rekan tersebut mentraktir sebagai tanda tutup mulut",1]],
+      "Menghindari prasangka namun tetap waspada dan memakai kanal pengaduan resmi mencerminkan integritas, kehati-hatian, serta dukungan pada budaya antikorupsi tanpa menghakimi atau mempermalukan rekan."),
+    TKP("Menjelang Lebaran, rekanan proyek yang sedang mengikuti pengadaan di unit Anda mengirim parsel berisi barang bernilai besar ke rumah Anda tanpa pemberitahuan sebelumnya. Sikap Anda adalah...",
+      [["Menerima dan menyimpan karena parsel dianggap tradisi menjelang hari raya",1],["Menolak atau mengembalikan bila memungkinkan, dan bila sudah telanjur diterima segera melaporkannya kepada unit pengendalian gratifikasi atau KPK dalam batas waktu yang ditetapkan",5],["Membagikan parsel kepada tetangga agar tidak berkaitan dengan diri sendiri",2],["Menerima tetapi tidak memberi keuntungan apa pun kepada rekanan tersebut",2],["Menyimpannya sementara sampai proses pengadaan selesai lalu memutuskan kemudian",3]],
+      "Pemberian dari pihak yang berkepentingan dengan jabatan merupakan potensi gratifikasi. Menolak atau melaporkan sesuai ketentuan menunjukkan integritas dan kepatuhan hukum, meski niat pemberi tampak baik."),
+    TKP("Banjir bandang melanda kecamatan tempat Anda bertugas dan Anda ditugaskan mengelola posko pengungsian, padahal rumah keluarga Anda sendiri juga terdampak. Sikap Anda adalah...",
+      [["Mengutamakan menyelamatkan keluarga terlebih dahulu dan meninggalkan posko tanpa serah terima",2],["Melapor kepada atasan mengenai kondisi keluarga, meminta rekan mengambil alih sementara secara terkoordinasi, memastikan keluarga aman, lalu kembali mengelola posko sesuai jadwal",5],["Tetap di posko tanpa memberi tahu siapa pun tentang kondisi keluarga",3],["Meminta relawan lain menggantikan sepenuhnya tanpa kembali ke posko",1],["Membawa anggota keluarga ke posko dan memberi mereka prioritas bantuan",1]],
+      "Menyeimbangkan tanggung jawab tugas dan keluarga melalui koordinasi transparan serta serah terima yang jelas mencerminkan profesionalisme, tanggung jawab, dan pengendalian diri dalam situasi krisis."),
+    TKP("Di Mal Pelayanan Publik, seorang lansia yang tidak familiar dengan teknologi kesulitan menggunakan anjungan layanan mandiri dan mulai kebingungan di tengah antrean panjang. Sikap Anda adalah...",
+      [["Menyarankan lansia tersebut meminta bantuan anggota keluarganya lain kali",2],["Mendampingi langsung sampai proses layanan selesai, lalu menyampaikan usulan kepada unit terkait agar disediakan petugas pendamping dan alur layanan yang ramah kelompok rentan",5],["Menyuruhnya membaca petunjuk di layar dengan lebih cermat",1],["Mengambil alih dan menyelesaikan layanan tanpa menjelaskan langkahnya",3],["Membiarkan karena petugas lain sedang bertugas di anjungan",1]],
+      "Mendampingi sekaligus mengusulkan perbaikan sistemik menunjukkan orientasi pelayanan yang inklusif dan berorientasi pada kebutuhan pengguna, bukan sekadar menyelesaikan kasus sesaat."),
+    TKP("Anda melihat rekan yang bertugas di loket perizinan meminta uang tambahan kepada pemohon dengan alasan 'uang percepatan' agar berkas diproses lebih cepat. Sikap Anda adalah...",
+      [["Menganggapnya wajar karena banyak instansi melakukan hal serupa",1],["Mendokumentasikan kejadian dengan tepat, melaporkannya kepada atasan atau kanal pengaduan resmi, dan memastikan pemohon mendapat informasi tarif resmi",5],["Menegur rekan tersebut secara pribadi tanpa melaporkan, lalu menganggap masalah selesai",3],["Meminta bagian dari uang tersebut agar tidak melapor",1],["Menyampaikannya sebagai gosip kepada teman-teman agar hati-hati",2]],
+      "Mendokumentasikan dan melaporkan pungutan liar melalui jalur resmi mencerminkan integritas serta dukungan terhadap pelayanan publik yang bersih, sedangkan sekadar menegur secara pribadi tidak menyelesaikan pelanggaran."),
+    TKP("Instansi Anda mengganti alur kerja lama dengan aplikasi terintegrasi berbasis SPBE. Beberapa pegawai senior menolak menggunakannya dengan alasan lebih nyaman memakai cara lama. Sikap Anda sebagai pegawai yang lebih cepat menguasai aplikasi adalah...",
+      [["Membiarkan mereka tetap memakai cara lama agar tidak terjadi konflik",2],["Menawarkan pendampingan dan panduan singkat secara sabar, sambil menunjukkan keuntungan aplikasi pada pekerjaan mereka sehari-hari",5],["Melaporkan mereka ke atasan sebagai penghambat program",2],["Mengerjakan seluruh input mereka di aplikasi tanpa mengajari",3],["Mengejek cara kerja lama mereka di depan tim agar terdorong berubah",1]],
+      "Pendampingan yang sabar dan penonjolan manfaat nyata mendorong adaptasi digital secara kolaboratif dan menghargai pengalaman senior, tanpa memaksa atau mempermalukan."),
+    TKP("Pemerintah mengubah ketentuan teknis suatu layanan secara mendadak melalui regulasi baru, padahal SOP dan sosialisasi di unit Anda belum diperbarui sehingga warga mengeluh karena informasi yang diterima berbeda-beda. Sikap Anda adalah...",
+      [["Tetap menggunakan SOP lama sampai ada perintah tertulis dari atasan",2],["Mempelajari regulasi baru secepatnya, berkoordinasi dengan atasan untuk menyepakati penjelasan tunggal bagi warga, dan membantu memperbarui SOP serta materi informasi",5],["Menyampaikan kepada warga bahwa kebijakan baru itu keliru dan tidak perlu diikuti",1],["Meminta warga datang kembali setelah regulasi disosialisasikan",2],["Menjawab sesuai pemahaman masing-masing petugas agar layanan tetap berjalan",1]],
+      "Menyelaraskan pemahaman dan memperbarui SOP secara proaktif menjamin kepastian layanan dan konsistensi informasi bagi warga saat terjadi perubahan regulasi mendadak."),
+    TKP("Rekan Anda yang berstatus tenaga non-ASN sangat cemas akan kehilangan pekerjaan akibat penataan tenaga non-ASN, sehingga kualitas kerjanya menurun dan ia sering melamun. Sikap Anda adalah...",
+      [["Menjauhinya agar tidak ikut terbawa suasana negatif",1],["Mengajaknya berbicara dengan empati, membantu ia memahami informasi resmi tentang seleksi dan peluang yang tersedia, serta membantu pekerjaan yang mendesak sambil mendorong komunikasi dengan atasan",5],["Menyarankan ia berhenti dari pekerjaan sekarang dan mencari pekerjaan lain",1],["Menegur bahwa performa yang menurun hanya akan mempersulit posisinya",2],["Mengabaikan kondisi tersebut karena itu urusan pribadi dan kebijakan pemerintah",2]],
+      "Empati yang disertai bantuan praktis dan informasi resmi menunjukkan kepedulian sosial dan kerja sama tim, tanpa memberi janji palsu atau membiarkan rekan larut dalam kecemasan."),
+    TKP("Sekelompok warga berunjuk rasa di depan kantor Anda menolak sebuah kebijakan pemerintah daerah dan meminta bertemu perwakilan pimpinan. Anda bertugas di bagian penerima tamu. Sikap Anda adalah...",
+      [["Menutup pintu kantor dan tidak menanggapi para pengunjuk rasa",1],["Menemui perwakilan warga dengan tenang, mencatat aspirasi mereka, menyampaikan segera kepada pimpinan, dan menjelaskan jadwal tindak lanjut yang pasti",5],["Meminta aparat keamanan membubarkan mereka tanpa ada gangguan ketertiban",1],["Meminta mereka membuat surat resmi terlebih dahulu dan pulang",3],["Menjanjikan kebijakan akan dibatalkan agar mereka segera pulang",2]],
+      "Menerima aspirasi secara tertib dan meneruskannya kepada pimpinan mencerminkan komunikasi publik yang terbuka dan pengendalian diri, tanpa memberi janji di luar kewenangan."),
+    TKP("Seorang rekan mengunggah kritik tajam di akun media sosial pribadinya terhadap kebijakan atasan langsung Anda dengan menyebut nama dan jabatan, dan unggahan itu menjadi viral. Sikap Anda adalah...",
+      [["Ikut membagikan unggahan tersebut karena mendukung kritik itu",1],["Mengingatkan rekan tersebut secara pribadi tentang etika bermedia sosial bagi ASN dan menyarankan penyampaian kritik lewat forum atau kanal internal yang konstruktif",5],["Melaporkan rekan tersebut kepada atasan sambil membesar-besarkan kesalahannya",2],["Membiarkan karena kebebasan berpendapat dilindungi konstitusi",2],["Membalas unggahan tersebut dengan menyerang pribadi rekan itu",1]],
+      "Mengingatkan dengan cara santun dan mengarahkan pada kanal yang konstruktif menjaga kebebasan berpendapat sekaligus etika ASN dan nama baik instansi."),
+    TKP("Dalam rapat unit, seorang rekan membuat komentar bernada merendahkan terhadap rekan lain yang berbeda agama dengan menyebut kebiasaan ibadahnya menghambat pekerjaan tim. Suasana rapat menjadi canggung. Sikap Anda adalah...",
+      [["Diam saja untuk menghindari konflik",1],["Menyampaikan dengan tenang bahwa perbedaan keyakinan wajib dihormati, lalu mengalihkan diskusi pada solusi pembagian tugas yang adil dan menemui rekan yang tersinggung untuk menunjukkan dukungan",5],["Tertawa agar suasana mencair",1],["Menyuruh rekan yang berkomentar untuk keluar dari rapat tanpa penjelasan",2],["Melaporkan seluruh peserta rapat kepada atasan atas kejadian tersebut",2]],
+      "Menegur perilaku diskriminatif dengan tenang, mengalihkan ke solusi, dan mendukung rekan yang tersinggung mencerminkan sensitivitas sosial budaya dan kepemimpinan yang menjaga kerukunan di tempat kerja."),
+    TKP("Sebagai ASN di dinas kesehatan pada saat lonjakan kasus Covid-19, stok oksigen di beberapa rumah sakit menipis dan warga panik mencari informasi ketersediaan tabung. Sikap Anda adalah...",
+      [["Menunggu instruksi rinci dari pimpinan sebelum melakukan apa pun",2],["Segera berkoordinasi dengan rumah sakit dan pemasok untuk memperbarui data ketersediaan secara berkala, lalu menyebarkan informasi tersebut melalui kanal resmi agar warga tidak mengandalkan kabar yang belum terverifikasi",5],["Membatasi informasi agar tidak menimbulkan kepanikan yang lebih besar",1],["Mengalihkan seluruh pertanyaan warga ke pusat data nasional",2],["Membantu keluarga dan kerabat terlebih dahulu memperoleh oksigen",1]],
+      "Koordinasi cepat dan penyampaian informasi terbuka melalui kanal resmi mencerminkan sikap proaktif, transparan, dan berorientasi pada kepentingan publik di tengah krisis."),
+    TKP("Anda menggunakan aplikasi kecerdasan buatan (AI) generatif untuk mempercepat penyusunan laporan, dan menyadari bahwa rekan lain mengunggah dokumen internal berklasifikasi terbatas ke aplikasi tersebut untuk diringkas. Sikap Anda adalah...",
+      [["Membiarkan karena AI tidak menyimpan data pengguna",1],["Mengingatkan rekan tentang risiko kebocoran informasi, menyarankan penggunaan dokumen tanpa data sensitif atau perangkat resmi yang diizinkan, serta mengusulkan pedoman penggunaan AI di unit kerja",5],["Melarang seluruh rekan menggunakan AI dalam bentuk apa pun",2],["Menggunakan AI hanya untuk pekerjaan Anda sendiri dan tidak memberi tahu siapa pun",3],["Menyalin dokumen tersebut ke perangkat pribadi agar dapat diringkas di rumah",1]],
+      "Memanfaatkan teknologi dengan tetap menjaga kerahasiaan data instansi, disertai usulan pedoman bersama, mencerminkan literasi digital, kehati-hatian, dan inovasi yang bertanggung jawab."),
+    TKP("Unit Anda menerima usulan program pengelolaan sampah dari warga, namun anggaran tahun berjalan sudah habis. Warga sangat berharap program tetap dimulai. Sikap Anda adalah...",
+      [["Menolak usulan warga karena tidak tersedia anggaran",2],["Mengajak warga menyusun proyek percontohan berbasis swadaya, menjajaki kemitraan dengan pihak lain, dan mengusulkan program tersebut dalam perencanaan anggaran tahun berikutnya",5],["Menjanjikan program berjalan dengan mengalihkan anggaran kegiatan lain tanpa persetujuan",1],["Meminta warga menunggu tanpa kepastian waktu",2],["Mengarahkan warga meminta bantuan langsung kepada pejabat tinggi",2]],
+      "Mencari alternatif kreatif seperti swadaya, kemitraan, dan perencanaan anggaran berikutnya menunjukkan inovasi dan orientasi pada solusi tanpa melanggar aturan pengelolaan anggaran."),
+    TKP("Anda menyadari bahwa kesalahan Anda saat menginput data menyebabkan seorang warga tidak terdaftar sebagai penerima bantuan yang menjadi haknya, dan warga tersebut sudah mengeluh. Sikap Anda adalah...",
+      [["Menyalahkan sistem yang sedang bermasalah agar tidak dianggap lalai",1],["Segera melapor kepada atasan, memperbaiki data sesuai prosedur koreksi, meminta maaf kepada warga, dan menyampaikan estimasi waktu penyelesaian yang realistis",5],["Memperbaiki data diam-diam tanpa memberi tahu siapa pun",3],["Meminta warga bersabar tanpa memberi penjelasan",2],["Mengalihkan kesalahan kepada rekan yang sebelumnya menangani berkas tersebut",1]],
+      "Mengakui kesalahan, memperbaikinya secara prosedural, dan berkomunikasi jujur kepada warga mencerminkan integritas dan tanggung jawab profesional."),
+    TKP("Anda mengetahui bahwa atasan Anda diduga menggelembungkan (mark-up) anggaran perjalanan dinas unit kerja. Anda memiliki bukti dokumen yang cukup, namun atasan tersebut sangat berpengaruh dan pernah mengancam bawahannya. Sikap Anda adalah...",
+      [["Diam agar posisi Anda aman",1],["Melaporkan dugaan tersebut melalui whistleblowing system atau inspektorat dengan bukti yang memadai serta memanfaatkan perlindungan pelapor yang tersedia",5],["Meminta bagian dari selisih anggaran sebagai kompensasi tutup mulut",1],["Menyebarkan dugaan tersebut kepada seluruh pegawai tanpa melapor secara resmi",2],["Memberi tahu atasan bahwa Anda mengetahui perbuatannya dan meminta ia memperbaikinya sendiri",3]],
+      "Pelaporan melalui jalur resmi disertai bukti dan pelindungan pelapor mencerminkan integritas dan keberanian menegakkan tata kelola yang bersih, meski berisiko secara personal."),
+    TKP("Rekan senior di tim Anda menolak berbagi informasi dan cenderung bekerja sendiri sehingga target tim tertunda. Sebagai anggota tim yang lebih muda, sikap Anda adalah...",
+      [["Melaporkan langsung kepada pimpinan agar rekan tersebut ditegur",2],["Mendekati rekan tersebut dengan menghargai pengalamannya, meminta pendapat tentang tugas tertentu, dan mengusulkan pembagian peran yang jelas melalui rapat tim",5],["Mengerjakan tugas tanpa melibatkan rekan tersebut sama sekali",2],["Menyindirnya di grup kerja agar lebih terbuka",1],["Mengikuti pola kerjanya dan bekerja sendiri-sendiri juga",1]],
+      "Pendekatan yang menghargai dan pembagian peran yang jelas mendorong kerja sama tim lintas generasi tanpa konfrontasi maupun eskalasi yang tidak perlu."),
+    TKP("Saat sistem kependudukan daring mengalami gangguan panjang, warga yang telah mengantre sejak pagi marah dan berteriak kepada Anda di loket. Sikap Anda adalah...",
+      [["Membalas dengan nada tinggi karena Anda juga merasa tertekan",1],["Tetap tenang, meminta maaf atas ketidaknyamanan, menjelaskan kondisi secara jujur, menawarkan alternatif layanan seperti pencatatan manual atau penjadwalan ulang, serta melaporkan gangguan kepada tim teknis",5],["Menutup loket sementara sampai warga tenang",2],["Meminta warga pulang tanpa menjelaskan penyebabnya",2],["Meminta petugas keamanan mengeluarkan warga yang marah",2]],
+      "Ketenangan, empati, dan tawaran solusi konkret menunjukkan pengendalian diri dan orientasi pelayanan, sekaligus memastikan gangguan teknis ditangani oleh pihak yang berwenang."),
+    TKP("Pada Sabtu pagi, atasan meminta Anda menyusun bahan rapat mendadak untuk hari Senin, padahal Anda sudah berjanji menghadiri acara keluarga penting pada hari itu. Sikap Anda adalah...",
+      [["Menolak permintaan atasan karena hari Sabtu bukan hari kerja",1],["Menjelaskan komitmen pribadi Anda kepada atasan, menawarkan penyelesaian bagian terpenting sebelum acara dan sisanya dari rumah pada malam hari, serta meminta rekan membantu pengecekan akhir",5],["Mengabaikan pesan atasan sampai hari Senin",1],["Membatalkan acara keluarga tanpa berdiskusi terlebih dahulu",3],["Mengerjakan sekadarnya asalkan selesai tepat waktu",2]],
+      "Komunikasi terbuka dan solusi yang seimbang antara tanggung jawab tugas dan komitmen pribadi menunjukkan profesionalisme, fleksibilitas, dan pengelolaan waktu yang matang."),
+    TKP("Anda menemukan bahwa data yang disusun atasan untuk laporan kepada pimpinan tertinggi memuat angka capaian yang lebih besar daripada data lapangan. Atasan meminta Anda tidak mengubahnya. Sikap Anda adalah...",
+      [["Menuruti atasan karena ia bertanggung jawab atas laporan tersebut",1],["Menyampaikan temuan selisih data beserta buktinya kepada atasan secara santun dan menyarankan koreksi, serta menaikkan ke tingkat lebih tinggi bila atasan tetap menolak",5],["Mengubah angka secara diam-diam sesuai data lapangan tanpa memberi tahu atasan",2],["Melaporkan langsung kepada pimpinan tertinggi tanpa menyampaikannya kepada atasan lebih dahulu",3],["Meminta rekan lain yang menandatangani laporan agar tidak terlibat",2]],
+      "Data yang akurat merupakan dasar akuntabilitas kebijakan. Menyampaikan temuan secara santun dan berjenjang mencerminkan integritas dan profesionalisme."),
+    TKP("Instansi menetapkan kewajiban pengembangan kompetensi minimal 20 jam pelajaran per tahun bagi setiap ASN. Jadwal Anda padat sehingga sulit mengikuti pelatihan tatap muka. Sikap Anda adalah...",
+      [["Menunda pelatihan sampai akhir tahun dan mengikuti apa pun yang tersedia",2],["Menyusun rencana pengembangan kompetensi sejak awal tahun sesuai kebutuhan jabatan, memanfaatkan pembelajaran daring yang fleksibel, dan mendiskusikan penyesuaian beban kerja dengan atasan",5],["Mengabaikan kewajiban karena pekerjaan lebih penting",1],["Meminta rekan mengikuti pelatihan atas nama Anda",1],["Mengikuti pelatihan seadanya asal kewajiban jam terpenuhi",3]],
+      "Perencanaan pengembangan diri yang terukur dan relevan dengan jabatan mencerminkan semangat berprestasi dan komitmen pada peningkatan kompetensi sebagai bagian dari kewajiban ASN."),
+    TKP("Dalam rapat daring lintas unit, seorang peserta mendominasi pembicaraan sementara peserta lain, termasuk Anda, hampir tidak sempat menyampaikan masukan padahal rapat hampir berakhir. Sikap Anda adalah...",
+      [["Menyampaikan keberatan secara emosional di forum rapat",1],["Menggunakan fitur tangan atau kolom obrolan untuk meminta giliran berbicara dengan sopan, lalu mengirim rangkuman masukan tertulis kepada pemimpin rapat setelah rapat bila waktu tidak cukup",5],["Diam dan tidak menyampaikan masukan apa pun",1],["Keluar dari rapat karena merasa tidak dihargai",1],["Meminta rapat dihentikan dan dijadwalkan ulang",3]],
+      "Menyampaikan masukan secara terstruktur dan santun, baik di forum maupun tertulis, memastikan kontribusi tersalurkan tanpa mengganggu jalannya rapat."),
+    TKP("Setelah gempa bumi melanda wilayah Anda, distribusi bantuan logistik dinilai tidak merata dan warga di satu dusun memblokir jalan menuntut bantuan segera. Anda menjadi koordinator lapangan. Sikap Anda adalah...",
+      [["Meminta aparat keamanan membuka blokade paksa agar distribusi lancar",1],["Menemui perwakilan warga, mendata kebutuhan mendesak secara langsung, memprioritaskan kelompok rentan, memberi jadwal distribusi yang jelas, dan mengoordinasikan tambahan logistik dengan posko induk",5],["Mengalihkan seluruh logistik ke dusun tersebut agar warga tenang",2],["Meminta warga bersabar tanpa memberi kepastian",2],["Menunggu blokade dibuka sendiri oleh warga",1]],
+      "Pendataan cepat, prioritas berbasis kerentanan, dan komunikasi terbuka meredakan ketegangan sekaligus menjamin keadilan distribusi bantuan pada situasi bencana."),
+    TKP("Anda ditugaskan mensosialisasikan program relokasi permukiman dari bantaran sungai kepada warga desa yang menolak keras karena takut kehilangan mata pencaharian. Sikap Anda adalah...",
+      [["Memberi tahu bahwa program bersifat wajib dan tidak dapat ditawar",1],["Mendengarkan kekhawatiran warga terlebih dahulu, melibatkan tokoh masyarakat, menjelaskan manfaat dan skema pendukung mata pencaharian secara transparan, serta menyampaikan aspirasi mereka kepada pengambil kebijakan",5],["Melaporkan bahwa warga tidak kooperatif dan menyarankan program dijalankan paksa",1],["Menyampaikan informasi satu arah lalu meninggalkan lokasi",2],["Menjanjikan kompensasi besar di luar kewenangan agar warga mau pindah",1]],
+      "Pendekatan partisipatif, transparan, dan berempati membangun kepercayaan serta menghasilkan kebijakan yang lebih dapat diterima, sekaligus menjaga integritas informasi yang disampaikan."),
+    TKP("Sehari setelah rilis resmi data statistik instansi Anda, Anda menyadari terdapat kesalahan pengetikan pada tabel utama yang dapat mengubah interpretasi publik. Belum ada pihak luar yang menyadarinya. Sikap Anda adalah...",
+      [["Membiarkan karena belum ada yang mempermasalahkan",1],["Segera melapor kepada atasan disertai usulan koreksi resmi, menerbitkan pembetulan melalui kanal yang sama dengan rilis, dan memperbaiki prosedur pengecekan sebelum publikasi",5],["Mengubah data di situs secara diam-diam tanpa keterangan koreksi",2],["Menunggu ada yang menegur lebih dahulu sebelum bertindak",1],["Menyalahkan tim pengolah data di forum internal",1]],
+      "Koreksi terbuka dan perbaikan prosedur menjaga kepercayaan publik terhadap data resmi dan mencerminkan integritas serta akuntabilitas institusi."),
+    TKP("Saat menguji aplikasi layanan publik yang baru diluncurkan, Anda menemukan celah keamanan yang memungkinkan siapa pun melihat data pemohon lain. Aplikasi tersebut sudah digunakan ribuan warga. Sikap Anda adalah...",
+      [["Menyebarkan temuan tersebut di media sosial agar segera diperbaiki",1],["Segera melaporkan temuan beserta langkah reproduksinya kepada tim keamanan siber dan pemilik sistem secara tertutup, serta merekomendasikan mitigasi sementara sampai celah ditutup",5],["Menggunakan celah tersebut untuk membuktikan bahwa aplikasi berbahaya",1],["Membiarkan karena bukan bagian dari tugas Anda",1],["Menyampaikannya kepada rekan secara informal tanpa laporan tertulis",3]],
+      "Pelaporan tertutup dan terstruktur kepada pihak berwenang mencegah penyalahgunaan data sekaligus mempercepat perbaikan, sesuai etika keamanan informasi dan pelindungan data pribadi."),
+    TKP("Anda bertugas memverifikasi dapur penyedia program Makan Bergizi Gratis di wilayah Anda. Salah satu dapur belum memenuhi standar higiene dan sanitasi, namun pengelolanya meminta segera beroperasi karena target distribusi mendesak. Sikap Anda adalah...",
+      [["Mengizinkan beroperasi dahulu dan memperbaiki standar setelah program berjalan",1],["Tidak merekomendasikan operasional penuh sebelum standar dipenuhi, membantu pengelola menyusun perbaikan yang prioritas dan berbatas waktu, serta melaporkan status verifikasi kepada atasan",5],["Menyatakan dapur tersebut tidak layak tanpa memberi panduan perbaikan",3],["Memberikan sertifikat lolos agar target tercapai tepat waktu",1],["Menyerahkan keputusan sepenuhnya kepada pengelola dapur",2]],
+      "Keselamatan penerima manfaat tidak boleh dikorbankan demi target. Menegakkan standar sambil membantu perbaikan mencerminkan integritas, profesionalisme, dan kepedulian pada masyarakat."),
+    TKP("Pemerintah menerapkan efisiensi anggaran sehingga anggaran perjalanan dinas unit Anda dipangkas signifikan, padahal target pembinaan ke daerah tetap harus tercapai. Sikap Anda adalah...",
+      [["Menyatakan target mustahil dicapai dan berhenti melakukan pembinaan",1],["Menyusun ulang strategi pembinaan dengan memanfaatkan pertemuan daring, menggabungkan kunjungan lapangan pada daerah prioritas, dan melaporkan kendala kepada atasan agar target dapat disesuaikan secara rasional",5],["Menggunakan dana pribadi untuk perjalanan dinas agar tidak terlaporkan sebagai kendala",2],["Tetap melakukan perjalanan ke seluruh daerah dengan mengurangi kualitas pembinaan",2],["Memanipulasi laporan agar seolah-olah seluruh kunjungan telah dilakukan",1]],
+      "Menyesuaikan strategi secara kreatif dan transparan pada keterbatasan sumber daya mencerminkan inovasi, orientasi hasil, dan integritas pelaporan."),
+    TKP("Anda mengetahui bahwa seorang rekan dekat diduga terjerat judi online dan mulai meminjam uang kepada beberapa pegawai dengan berbagai alasan. Sikap Anda adalah...",
+      [["Meminjaminya uang agar masalah cepat selesai",1],["Berbicara empatik secara pribadi, menyarankannya mencari bantuan konseling atau layanan yang tersedia, tidak memberi pinjaman, dan melaporkan kepada atasan atau unit terkait jika perilaku itu berlanjut atau berdampak pada tugas",5],["Menyebarkan kabar tersebut kepada seluruh pegawai agar waspada",1],["Menjauh tanpa berbuat apa-apa",2],["Menegurnya keras di depan umum agar jera",1]],
+      "Kombinasi empati, batasan yang tegas, dan kesediaan melapor bila diperlukan mencerminkan kepedulian, integritas, dan perlindungan terhadap organisasi tanpa mempermalukan rekan."),
+    TKP("Anggota tim Anda tampak kelelahan dan mudah tersinggung menjelang tenggat proyek besar. Salah seorang bahkan mengaku merasa tidak mampu lagi mengikuti ritme kerja. Sebagai ketua tim, sikap Anda adalah...",
+      [["Meminta seluruh anggota tetap bekerja karena tenggat tidak dapat diundur",2],["Berbicara dengan anggota tim secara terbuka, meninjau kembali pembagian beban dan prioritas, memberi jeda istirahat yang wajar, dan menegosiasikan dukungan tambahan kepada atasan bila diperlukan",5],["Mengganti anggota yang mengeluh dengan pegawai lain tanpa penjelasan",1],["Mengambil alih seluruh pekerjaan anggota tersebut sendirian",3],["Mengabaikan keluhan karena dianggap wajar menjelang tenggat",1]],
+      "Kepemimpinan yang peduli tetapi tetap berorientasi hasil menyeimbangkan kesejahteraan tim dan pencapaian target melalui pengaturan prioritas dan dukungan yang realistis."),
+    TKP("Untuk menyusun kebijakan lintas sektor, unit Anda membutuhkan data dari unit lain, tetapi unit tersebut enggan berbagi data dengan alasan itu merupakan data internal mereka. Sikap Anda adalah...",
+      [["Menyusun kebijakan berdasarkan asumsi tanpa data tersebut",2],["Menjelaskan tujuan bersama dan dasar aturan berbagi data, menawarkan kerangka kerja sama yang menjamin keamanan data, serta mengusulkan pertemuan koordinasi difasilitasi atasan bersama",5],["Melaporkan unit tersebut kepada pimpinan tertinggi sebagai penghambat",2],["Mengambil data secara diam-diam dari sistem bersama",1],["Meminta pimpinan unit memerintahkan unit tersebut menyerahkan data tanpa dialog",3]],
+      "Pendekatan kolaboratif berbasis tujuan bersama dan jaminan keamanan data mengatasi ego sektoral serta mendukung tata kelola data yang terintegrasi."),
+    TKP("Melalui kanal pengaduan LAPOR!, masuk keluhan warga tentang jalan rusak, yang menjadi kewenangan dinas lain. Batas waktu tindak lanjut tinggal dua hari. Sikap Anda adalah...",
+      [["Mengabaikan keluhan karena bukan kewenangan unit Anda",1],["Meneruskan keluhan kepada dinas berwenang dengan disposisi yang jelas, memberi tahu pelapor mengenai tindak lanjutnya, dan memantau hingga ada respons",5],["Menutup laporan sebagai selesai agar tidak melewati batas waktu",1],["Membalas pelapor agar mengajukan pengaduan ulang ke dinas yang tepat",3],["Membalas dengan penjelasan panjang tanpa meneruskan keluhan",2]],
+      "Menyalurkan dan memantau pengaduan sampai tuntas mencerminkan tanggung jawab pelayanan publik yang tidak berhenti pada batas kewenangan unit."),
+    TKP("Sebuah video pendek yang menampilkan cuplikan layanan di kantor Anda beredar luas di media sosial dengan narasi negatif yang sebagian tidak akurat. Banyak warga mengomentari pelayanan Anda. Sikap Anda adalah...",
+      [["Membalas komentar netizen dengan emosional",1],["Melaporkan kejadian kepada atasan dan tim humas, meninjau kembali fakta kejadian, dan mendukung penyampaian klarifikasi resmi yang santun serta perbaikan layanan bila memang ditemukan kekurangan",5],["Mengabaikan seluruhnya karena percuma menanggapi netizen",2],["Menghapus rekaman CCTV terkait kejadian tersebut",1],["Menuntut pembuat video secara pribadi atas pencemaran nama baik",2]],
+      "Menanggapi secara terkoordinasi melalui kanal resmi, berbasis fakta, dan terbuka terhadap perbaikan menunjukkan pengendalian diri, akuntabilitas, dan orientasi peningkatan pelayanan."),
+    TKP("Anda ditunjuk sebagai pendamping (mentor) bagi CPNS baru yang tampak sulit beradaptasi dan sering melakukan kesalahan administratif. Sikap Anda adalah...",
+      [["Mengerjakan seluruh tugasnya agar tidak ada kesalahan",2],["Memberi arahan bertahap, memberi kesempatan mencoba dengan umpan balik yang konstruktif, dan mengenalkannya pada nilai serta budaya kerja instansi",5],["Melaporkan kesalahannya kepada atasan setiap kali terjadi",2],["Membiarkannya belajar sendiri tanpa bantuan",1],["Memarahi di depan tim agar lebih hati-hati",1]],
+      "Pendampingan bertahap dengan umpan balik yang konstruktif membangun kompetensi dan rasa percaya diri pegawai baru serta menunjukkan kepemimpinan yang suportif."),
+    TKP("Anda ditugaskan di daerah terpencil dengan sinyal internet terbatas dan harus mensosialisasikan layanan digital pemerintah kepada masyarakat setempat yang sebagian besar belum familiar dengan gawai. Sikap Anda adalah...",
+      [["Menyampaikan materi dengan slide berbahasa teknis dan berharap warga memahami sendiri",1],["Menyesuaikan metode dengan peragaan langsung, bahasa sederhana, materi cetak, dan pendampingan tokoh setempat, serta merancang alternatif layanan luring bagi warga yang tidak terjangkau sinyal",5],["Menunda sosialisasi sampai jaringan internet membaik",2],["Melakukan sosialisasi hanya kepada aparat desa lalu menganggap tugas selesai",3],["Meminta warga mengunduh aplikasi secara mandiri lalu menghubungi Anda bila kesulitan",2]],
+      "Adaptasi metode dengan konteks lokal dan penyediaan alternatif layanan mencerminkan kepekaan sosial budaya, kreativitas, dan komitmen pada pemerataan pelayanan publik."),
+    TKP("Seorang penyandang disabilitas netra datang ke kantor Anda untuk mengurus dokumen, tetapi formulir hanya tersedia dalam bentuk cetak dan tidak ada petugas pendamping. Sikap Anda adalah...",
+      [["Menyarankan ia datang bersama pendamping lain kali",2],["Mendampingi dengan membacakan dan membantu mengisi formulir sesuai keinginannya, menghormati privasinya, lalu mengusulkan penyediaan sarana layanan yang aksesibel",5],["Mengisi formulir tanpa menjelaskan isinya agar cepat selesai",1],["Meminta petugas keamanan menemaninya ke pintu keluar",1],["Mengarahkan ia mengurus melalui aplikasi daring tanpa bantuan",2]],
+      "Pelayanan yang inklusif, menjaga martabat dan privasi, serta disertai usulan perbaikan aksesibilitas mencerminkan orientasi pelayanan publik yang setara bagi semua warga."),
+    TKP("Atasan Anda memberi perintah lisan agar berkas milik kerabat dekatnya didahulukan dan proses verifikasinya disederhanakan, padahal berkas tersebut belum memenuhi seluruh persyaratan. Sikap Anda adalah...",
+      [["Melaksanakan perintah agar tidak menimbulkan masalah dengan atasan",1],["Menjelaskan secara santun bahwa seluruh berkas harus diproses sesuai prosedur yang sama, meminta atasan menyampaikan instruksi tertulis bila tetap berkeras, dan melaporkan ke pejabat pengawas bila pelanggaran berlanjut",5],["Menerima perintah tetapi memproses berkas sambil menunggu berkas tambahan dari kerabat tersebut",2],["Menolak tanpa penjelasan dan menghindari atasan setelahnya",2],["Menyampaikan perintah atasan kepada pemohon lain agar mereka protes",1]],
+      "Menolak konflik kepentingan sambil tetap sopan dan menggunakan jalur pengawasan resmi menjaga integritas dan keadilan layanan, tanpa memihak atau membangkang secara tidak profesional."),
+    TKP("Target kinerja unit Anda tahun 2020 tidak tercapai karena sebagian besar kegiatan lapangan tidak dapat dilaksanakan selama pembatasan Covid-19. Atasan meminta setiap pegawai menyampaikan evaluasi diri. Sikap Anda adalah...",
+      [["Menyalahkan pandemi sepenuhnya dan tidak melakukan evaluasi",2],["Menyusun evaluasi jujur yang membedakan faktor eksternal dari faktor internal, menyampaikan pembelajaran dari inovasi kerja yang berhasil selama pandemi, dan mengusulkan strategi adaptif untuk target berikutnya",5],["Menambah angka capaian di laporan agar tampak memenuhi target",1],["Menyalahkan rekan yang dianggap kurang berperan",1],["Menyampaikan evaluasi seadanya karena tidak ada sanksi",2]],
+      "Evaluasi yang jujur dan reflektif, yang memisahkan faktor eksternal dan internal serta menghasilkan strategi adaptif, mencerminkan semangat berprestasi dan tanggung jawab."),
+    TKP("Menjelang Lebaran saat pemerintah melarang mudik untuk menekan penularan Covid-19, orang tua Anda di kampung meminta Anda pulang karena sudah lama tidak bertemu. Sebagian rekan tetap berencana mudik diam-diam. Sikap Anda adalah...",
+      [["Ikut mudik diam-diam karena alasan keluarga lebih penting",1],["Menjelaskan kepada orang tua alasan kebijakan pembatasan, menjaga kedekatan melalui komunikasi daring serta mengirim bantuan yang diperlukan, dan mengingatkan rekan agar menaati aturan demi keselamatan bersama",5],["Mengajukan cuti dan mudik dengan alasan yang tidak sebenarnya",1],["Menaati aturan tetapi bersikap acuh terhadap rekan yang melanggar",3],["Melaporkan rekan yang berencana mudik kepada aparat tanpa memberi peringatan terlebih dahulu",2]],
+      "Menaati aturan pembatasan yang berlaku sambil tetap menjaga hubungan keluarga serta mengingatkan rekan secara persuasif mencerminkan integritas, tanggung jawab sosial, dan keteladanan sebagai ASN."),
+    ];
+
+    let fullQuizData = [];
+
+    function buildFullQuiz() {
+        const resultData = JSON.parse(JSON.stringify(masterHotsData));
+        const categories = ['TWK', 'TIU', 'TKP'];
+        const positionPools = {};
+
+        // Buat distribusi posisi jawaban benar A-E yang seimbang per kategori.
+        categories.forEach(category => {
+            const count = resultData.filter(q => q.category === category).length;
+            const base = Math.floor(count / 5);
+            const remainder = count % 5;
+            const pool = [];
+
+            for (let pos = 0; pos < 5; pos++) {
+                const amount = base + (pos < remainder ? 1 : 0);
+                for (let i = 0; i < amount; i++) pool.push(pos);
+            }
+
+            shuffleArray(pool);
+            positionPools[category] = pool;
+        });
+
+        const usedPosition = { TWK: 0, TIU: 0, TKP: 0 };
+
+        resultData.forEach((q) => {
+            if (q.category === 'TKP') {
+                const correctAnswerObject = q.options.find(opt => opt.score === 5);
+                if (correctAnswerObject) q.answer = correctAnswerObject.text;
+            }
+
+            const correctIndex = q.category === 'TKP'
+                ? q.options.findIndex(opt => opt.score === 5)
+                : q.options.findIndex(opt => opt === q.answer);
+
+            const correctOption = correctIndex >= 0 ? q.options[correctIndex] : null;
+            const wrongOptions = q.options.filter((_, idx) => idx !== correctIndex);
+            shuffleArray(wrongOptions);
+
+            const targetPosition = positionPools[q.category][usedPosition[q.category]++];
+            const arranged = [];
+            let wrongIndex = 0;
+
+            for (let i = 0; i < 5; i++) {
+                if (i === targetPosition && correctOption !== null) {
+                    arranged.push(correctOption);
+                } else {
+                    arranged.push(wrongOptions[wrongIndex++]);
+                }
+            }
+
+            q.options = arranged;
+        });
+
+        return resultData;
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    let currentQuestionIndex = 0;
+    let userAnswers = [];
+    let timerInterval;
+    let timeLeft = 100 * 60;
+
+    const infoPage = document.getElementById('info-page');
+    const examContainer = document.getElementById('exam-container');
+    const resultPage = document.getElementById('result-page');
+
+    document.getElementById('btn-mulai-ujian-sekarang').addEventListener('click', () => {
+        const inputNama = document.getElementById('input-nama-peserta');
+        let namaPeserta = (inputNama && inputNama.value.trim()) ? inputNama.value.trim() : 'Peserta';
+        document.querySelectorAll('.user-name-placeholder').forEach(el => { el.textContent = namaPeserta; });
+        infoPage.classList.add('hidden');
+        examContainer.classList.remove('hidden');
+        startQuiz();
+    });
+
+    function startQuiz() {
+        fullQuizData = buildFullQuiz();
+        userAnswers = new Array(fullQuizData.length).fill(null);
+        currentQuestionIndex = 0;
+        timeLeft = 100 * 60;
+        populateNavGridBkn();
+        loadQuestion(currentQuestionIndex);
+        updateHeaderProgress();
+        startTimer();
+    }
+
+    function populateNavGridBkn() {
+        const grid = document.getElementById('nav-grid-bkn');
+        grid.innerHTML = '';
+        for (let i = 0; i < fullQuizData.length; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i + 1;
+            btn.classList.add('nav-btn-bkn');
+            btn.id = `nav-btn-${i}`;
+            btn.addEventListener('click', () => loadQuestion(i));
+            grid.appendChild(btn);
+        }
+    }
+
+    function updateNavGridStyles() {
+        for (let i = 0; i < fullQuizData.length; i++) {
+            const btn = document.getElementById(`nav-btn-${i}`);
+            if (btn) {
+                btn.classList.remove('answered', 'current');
+                if (userAnswers[i] !== null) btn.classList.add('answered');
+                if (i === currentQuestionIndex) {
+                    btn.classList.add('current');
+                    btn.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                }
+            }
+        }
+    }
+
+    function loadQuestion(index) {
+        currentQuestionIndex = index;
+        const q = fullQuizData[index];
+        document.getElementById('soal-number-title').textContent = `Soal ${index + 1} dari ${fullQuizData.length}`;
+
+        const badge = document.getElementById('soal-category-badge');
+        if (q.category === 'TWK') { badge.textContent = 'Tes Wawasan Kebangsaan'; badge.className = "bg-violet-600 text-white px-3 py-1 rounded-full text-xs font-bold inline-block"; }
+        else if (q.category === 'TIU') { badge.textContent = 'Tes Intelegensia Umum'; badge.className = "bg-sky-600 text-white px-3 py-1 rounded-full text-xs font-bold inline-block"; }
+        else { badge.textContent = 'Tes Karakteristik Pribadi'; badge.className = "bg-amber-600 text-white px-3 py-1 rounded-full text-xs font-bold inline-block"; }
+
+        document.getElementById('question-text').innerHTML = q.question;
+
+        const optContainer = document.getElementById('options-container');
+        optContainer.innerHTML = '';
+        const optionLetters = ['A', 'B', 'C', 'D', 'E'];
+        const optionsData = (q.category === 'TKP') ? q.options.map(o => o.text) : q.options;
+
+        optionsData.forEach((optText, i) => {
+            const isSelected = userAnswers[index] === optText;
+            const div = document.createElement('div');
+            div.className = `option-item ${isSelected ? 'selected' : ''}`;
+            div.innerHTML = `
+                <input type="radio" name="q-opt" value="${i}" ${isSelected ? 'checked' : ''}>
+                <div class="option-letter">${optionLetters[i]}</div>
+                <div class="option-text">${optText}</div>
+            `;
+            div.addEventListener('click', () => {
+                document.querySelectorAll('.option-item').forEach(el => el.classList.remove('selected'));
+                div.classList.add('selected');
+                userAnswers[currentQuestionIndex] = optText;
+                updateNavGridStyles();
+                updateHeaderProgress();
+            });
+            optContainer.appendChild(div);
+        });
+
+        updateNavGridStyles();
+    }
+
+    function updateHeaderProgress() {
+        const answeredCount = userAnswers.filter(a => a !== null).length;
+        document.getElementById('dijawab-count-header').textContent = answeredCount;
+        document.getElementById('progress-fill').style.width = `${(answeredCount / fullQuizData.length) * 100}%`;
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                showCustomAlert("WAKTU HABIS!", "Ujian ditutup sistem. Lembar jawaban Anda telah tersimpan.");
+                finishQuiz();
+                return;
+            }
+            timeLeft--;
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            document.getElementById('timer-bkn-text').textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }, 1000);
+    }
+
+    document.getElementById('btn-simpan').addEventListener('click', () => {
+        if (userAnswers[currentQuestionIndex] === null) {
+            showCustomAlert("⚠️ BELUM MENJAWAB", "Silakan pilih salah satu jawaban terlebih dahulu untuk menyimpan dan melanjutkan ke soal berikutnya. Jika ingin melewati soal ini tanpa menjawab, gunakan tombol \"Lewati Soal Ini\".");
+            return;
+        }
+        if (currentQuestionIndex < fullQuizData.length - 1) loadQuestion(currentQuestionIndex + 1);
+        else showCustomConfirm();
+    });
+
+    document.getElementById('btn-lewatkan').addEventListener('click', () => {
+        if (currentQuestionIndex < fullQuizData.length - 1) loadQuestion(currentQuestionIndex + 1);
+    });
+
+    document.getElementById('finish-btn-header').addEventListener('click', () => showCustomConfirm());
+
+    const customAlert = document.getElementById('custom-alert');
+    function showCustomAlert(title, message) {
+        document.getElementById('unanswered-count').textContent = title;
+        document.getElementById('custom-alert-message').textContent = message;
+        document.getElementById('custom-alert-buttons').innerHTML = `<button id="alert-ok" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Mengerti</button>`;
+        customAlert.classList.remove('hidden');
+        document.getElementById('alert-ok').onclick = document.getElementById('close-alert-btn').onclick = () => customAlert.classList.add('hidden');
+    }
+
+    function showCustomConfirm() {
+        const empty = userAnswers.filter(a => a === null).length;
+        document.getElementById('unanswered-count').textContent = empty > 0 ? `⚠️ PERINGATAN: ${empty} SOAL KOSONG!` : `✅ SEMUA SOAL TERJAWAB!`;
+        document.getElementById('unanswered-count').className = empty > 0 ? "text-red-600 font-black mb-2" : "text-emerald-600 font-black mb-2";
+        document.getElementById('custom-alert-message').textContent = "Yakin akhiri simulasi? Skor akan langsung dikalkulasi.";
+        document.getElementById('custom-alert-buttons').innerHTML = `
+            <button id="btn-batal" class="bg-slate-200 text-slate-800 px-5 py-2.5 rounded-lg font-bold">Cek Kembali</button>
+            <button id="btn-yakin" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-lg font-bold shadow-lg">Ya, Akhiri Ujian</button>
+        `;
+        customAlert.classList.remove('hidden');
+        document.getElementById('btn-yakin').onclick = () => { customAlert.classList.add('hidden'); finishQuiz(); };
+        document.getElementById('btn-batal').onclick = document.getElementById('close-alert-btn').onclick = () => customAlert.classList.add('hidden');
+    }
+
+    function finishQuiz() {
+        clearInterval(timerInterval);
+        let twkScore = 0, tiuScore = 0, tkpScore = 0;
+
+        fullQuizData.forEach((q, i) => {
+            const ans = userAnswers[i];
+            if (ans) {
+                if (q.category === 'TWK' || q.category === 'TIU') {
+                    if (ans === q.answer) { q.category === 'TWK' ? twkScore += 5 : tiuScore += 5; }
+                } else if (q.category === 'TKP') {
+                    const originalQ = masterHotsData.find(mq => mq.question === q.question);
+                    const optMatch = originalQ.options.find(o => o.text === ans);
+                    if (optMatch) tkpScore += optMatch.score;
+                }
+            }
+        });
+
+        const total = twkScore + tiuScore + tkpScore;
+        const passTWK = twkScore >= 65, passTIU = tiuScore >= 80, passTKP = tkpScore >= 166;
+        const isLulus = passTWK && passTIU && passTKP;
+
+        document.getElementById('app-total-score').textContent = total;
+
+        setTimeout(() => {
+            document.getElementById('bar-twk').style.width = `${Math.min((twkScore/150)*100, 100)}%`;
+            document.getElementById('bar-tiu').style.width = `${Math.min((tiuScore/175)*100, 100)}%`;
+            document.getElementById('bar-tkp').style.width = `${Math.min((tkpScore/225)*100, 100)}%`;
+        }, 300);
+
+        document.getElementById('app-score-twk').textContent = twkScore;
+        document.getElementById('app-status-twk').textContent = passTWK ? "✓ AMAN" : "✗ GAGAL";
+        document.getElementById('app-status-twk').className = passTWK ? "text-[11px] bg-violet-200 text-violet-800 px-2 py-0.5 rounded font-black" : "text-[11px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-black";
+
+        document.getElementById('app-score-tiu').textContent = tiuScore;
+        document.getElementById('app-status-tiu').textContent = passTIU ? "✓ AMAN" : "✗ GAGAL";
+        document.getElementById('app-status-tiu').className = passTIU ? "text-[11px] bg-sky-200 text-sky-800 px-2 py-0.5 rounded font-black" : "text-[11px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-black";
+
+        document.getElementById('app-score-tkp').textContent = tkpScore;
+        document.getElementById('app-status-tkp').textContent = passTKP ? "✓ AMAN" : "✗ GAGAL";
+        document.getElementById('app-status-tkp').className = passTKP ? "text-[11px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded font-black" : "text-[11px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-black";
+
+        const badge = document.getElementById('app-overall-badge');
+        badge.textContent = isLulus ? "🎉 MEMENUHI AMBANG BATAS" : "⚠️ BELUM MEMENUHI AMBANG BATAS";
+        badge.className = isLulus
+            ? "px-4 py-2 rounded-full text-xs font-black tracking-wide uppercase text-center w-full bg-emerald-100 text-emerald-800 border-2 border-emerald-300 shadow-sm"
+            : "px-4 py-2 rounded-full text-xs font-black tracking-wide uppercase text-center w-full bg-red-100 text-red-800 border-2 border-red-300 shadow-sm";
+
+        examContainer.classList.add('hidden');
+        resultPage.classList.remove('hidden');
+        window.scrollTo(0,0);
+        renderExplanation('all');
+    }
+
+    function getCorrectOptionLetter(q) {
+        const correctIndex = q.category === 'TKP'
+            ? q.options.findIndex(opt => opt.score === 5)
+            : q.options.findIndex(opt => opt === q.answer);
+        return correctIndex >= 0 ? String.fromCharCode(65 + correctIndex) : '-';
+    }
+
+    function renderAnswerKey() {
+        const keyHTML = fullQuizData.map((q, idx) => `
+            <div class="bg-white border border-slate-200 rounded-lg px-3 py-2 text-center shadow-sm">
+                <div class="text-[10px] text-slate-500 font-bold">${idx + 1}</div>
+                <div class="text-lg font-black text-emerald-700">${getCorrectOptionLetter(q)}</div>
+            </div>
+        `).join('');
+
+        return `
+            <div class="mb-6 bg-slate-50 border border-slate-200 rounded-2xl p-4">
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <div>
+                        <h4 class="font-black text-slate-800">Kunci Jawaban — Sesi Ini</h4>
+                        <p class="text-xs text-slate-500">Posisi jawaban diacak setiap sesi dan dibuat seimbang A–E per kategori.</p>
+                    </div>
+                    <div class="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">${fullQuizData.length} Soal</div>
+                </div>
+                <div class="grid grid-cols-10 sm:grid-cols-11 md:grid-cols-15 gap-2">${keyHTML}</div>
+            </div>
+        `;
+    }
+
+    function renderExplanation(filterType) {
+        const list = document.getElementById('explanation-feed-list');
+        list.innerHTML = '';
+        let displayData = fullQuizData;
+
+        displayData.forEach((q, idx) => {
+            const ans = userAnswers[idx];
+            const oriQ = masterHotsData.find(mq => mq.question === q.question);
+
+            let isBenar = false, skorTkp = 0;
+            if (q.category === 'TKP') {
+                const o = oriQ.options.find(op => op.text === ans);
+                if (o) skorTkp = o.score;
+                isBenar = skorTkp === 5;
+            } else {
+                isBenar = ans === q.answer;
+            }
+
+            if (filterType === 'correct' && !isBenar) return;
+            if (filterType === 'incorrect' && isBenar) return;
+            if (filterType === 'twk' && q.category !== 'TWK') return;
+            if (filterType === 'tiu' && q.category !== 'TIU') return;
+            if (filterType === 'tkp' && q.category !== 'TKP') return;
+
+            const card = document.createElement('div');
+            card.className = `p-5 md:p-6 rounded-2xl border bg-white shadow-sm space-y-4 ${ans === null ? 'border-l-4 border-l-slate-400' : isBenar ? 'border-l-4 border-l-emerald-500' : 'border-l-4 border-l-red-500'}`;
+
+            let badge = ans === null ? `<span class="bg-slate-100 text-slate-500 px-3 py-1 rounded-full text-xs font-black uppercase">Kosong (0)</span>`
+                      : q.category === 'TKP' ? `<span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-black uppercase">Skor: ${skorTkp}/5</span>`
+                      : isBenar ? `<span class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-black uppercase">Benar (+5)</span>`
+                      : `<span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-black uppercase">Salah (0)</span>`;
+
+            let optionsHTML = '<div class="space-y-2.5 mt-3">';
+            const optionLetters = ['A', 'B', 'C', 'D', 'E'];
+
+            if (q.category === 'TKP') {
+                const maxScore = 5;
+                q.options.forEach((opt, oIdx) => {
+                    const isSelected = (ans === opt.text);
+                    const isCorrect = (opt.score === maxScore);
+                    let optClass = "border-slate-200 bg-white text-slate-700";
+                    let badgeHTML = `<span class="ml-auto text-[11px] font-semibold bg-slate-100 px-2.5 py-1 rounded-full text-slate-500">Skor: ${opt.score}</span>`;
+                    if (isCorrect) { optClass = "border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold shadow-sm"; badgeHTML = `<span class="ml-auto text-[11px] font-extrabold bg-emerald-200 px-2.5 py-1 rounded-full text-emerald-800 flex items-center gap-1">✓ Kunci (Skor 5)</span>`; }
+                    if (isSelected) {
+                        if (isCorrect) { optClass = "border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold shadow-sm ring-2 ring-emerald-400"; badgeHTML = `<span class="ml-auto text-[11px] font-extrabold bg-emerald-200 px-2.5 py-1 rounded-full text-emerald-800 flex items-center gap-1">✓ Pilihan Anda (Skor 5)</span>`; }
+                        else { optClass = "border-red-500 bg-red-50 text-red-950 font-semibold shadow-sm ring-2 ring-red-400"; badgeHTML = `<span class="ml-auto text-[11px] font-extrabold bg-red-200 px-2.5 py-1 rounded-full text-red-800 flex items-center gap-1">✗ Pilihan Anda (Skor ${opt.score})</span>`; }
+                    }
+                    optionsHTML += `<div class="flex items-start md:items-center p-3 border rounded-xl text-sm transition-all ${optClass}"><div class="w-7 h-7 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold mr-3 shrink-0">${optionLetters[oIdx]}</div><div class="flex-grow pr-2 leading-relaxed text-slate-800">${opt.text}</div>${badgeHTML}</div>`;
+                });
+            } else {
+                q.options.forEach((optStr, oIdx) => {
+                    const isSelected = (ans === optStr);
+                    const isCorrect = (optStr === q.answer);
+                    let optClass = "border-slate-200 bg-white text-slate-700";
+                    let badgeHTML = "";
+                    if (isCorrect) { optClass = "border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold shadow-sm"; badgeHTML = `<span class="ml-auto text-[11px] font-extrabold bg-emerald-200 px-2.5 py-1 rounded-full text-emerald-800 flex items-center gap-1">✓ Kunci Jawaban</span>`; }
+                    if (isSelected) {
+                        if (isCorrect) { optClass = "border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold shadow-sm ring-2 ring-emerald-400"; badgeHTML = `<span class="ml-auto text-[11px] font-extrabold bg-emerald-200 px-2.5 py-1 rounded-full text-emerald-800 flex items-center gap-1">✓ Pilihan Anda (Benar)</span>`; }
+                        else { optClass = "border-red-500 bg-red-50 text-red-950 font-semibold shadow-sm ring-2 ring-red-400"; badgeHTML = `<span class="ml-auto text-[11px] font-extrabold bg-red-200 px-2.5 py-1 rounded-full text-red-800 flex items-center gap-1">✗ Pilihan Anda (Salah)</span>`; }
+                    }
+                    optionsHTML += `<div class="flex items-start md:items-center p-3 border rounded-xl text-sm transition-all ${optClass}"><div class="w-7 h-7 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold mr-3 shrink-0">${optionLetters[oIdx]}</div><div class="flex-grow pr-2 leading-relaxed text-slate-800">${optStr}</div>${badgeHTML}</div>`;
+                });
+            }
+
+            if (ans === null) {
+                optionsHTML += `<div class="p-3 bg-slate-100 text-slate-600 text-xs font-semibold rounded-xl mt-2 text-center italic border border-dashed border-slate-200">⚠️ Anda Melewatkan Soal Ini (Tidak Menjawab / Kosong)</div>`;
+            }
+            optionsHTML += '</div>';
+
+            card.innerHTML = `
+                <div class="flex justify-between items-center border-b pb-3 border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold text-slate-400">#${idx+1}</span>
+                        <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600">${q.category}</span>
+                    </div>
+                    ${badge}
+                </div>
+                <div class="text-slate-800 font-medium text-[15px] leading-relaxed">${q.question}</div>
+                <div class="space-y-2 mt-3">
+                    <div class="text-xs font-bold text-slate-400 uppercase">Pilihan Ganda & Analisis:</div>
+                    ${optionsHTML}
+                </div>
+                <div class="mt-4 p-4 md:p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-600 rounded-r-xl">
+                    <div class="flex items-center gap-1.5 text-blue-800 font-black text-sm uppercase tracking-wider mb-2">💡 Kupas Tuntas HOTS</div>
+                    <p class="text-slate-700 text-sm leading-relaxed text-justify">${oriQ.pembahasan}</p>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+
+        // Kunci jawaban ditampilkan setelah seluruh pembahasan selesai.
+        list.insertAdjacentHTML('beforeend', renderAnswerKey());
+    }
+
+    document.querySelectorAll('#explanation-filters button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('#explanation-filters button').forEach(b => b.className = 'filter-btn px-4 py-1.5 rounded-lg text-xs font-bold transition bg-white text-slate-600 border border-slate-200 hover:bg-slate-50');
+            e.target.className = 'filter-btn active px-4 py-1.5 rounded-lg text-xs font-bold transition bg-[#1e3a8a] text-white';
+            renderExplanation(e.target.dataset.filter);
+        });
+    });
+
+});
+</script>
+</body>
+</html>
